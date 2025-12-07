@@ -1,5 +1,5 @@
 // Update this version manually when you deploy a new version
-const APP_VERSION = '1.0.6';
+const APP_VERSION = 'b.0.7';
 const CACHE_NAME = `guappo-${APP_VERSION}`;
 const urlsToCache = [
   './',
@@ -33,7 +33,6 @@ const urlsToCache = [
   './src/ui/MyRexUIButton.js',
   './src/ui/SolverDialog.js',
   './src/ui/SpaceSlider.js',
-  './assets/level_form.html',
   './assets/images/beehive.png',
   './assets/images/BoardBackground.png',
   './assets/images/ed1.png',
@@ -45,7 +44,7 @@ const urlsToCache = [
   './assets/images/friend1.png',
   './assets/images/friend2.png',
   './assets/images/gameover.png',
-  './assets/images/gamewon.png',
+  './assets/images/gamewon.png',  
   './assets/images/gap.png',
   './assets/images/Guappo_Junior_logo.png',
   './assets/images/hint.png',

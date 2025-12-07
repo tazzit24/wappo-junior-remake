@@ -43,6 +43,11 @@ if (isMobile == -1) {
     };
 }*/
 
+// Calculate base dimensions using device pixel ratio for crisp rendering on HiDPI screens
+const dpr = Math.min(window.devicePixelRatio || 1, 3); // Cap at 3x to avoid performance issues
+const baseWidth = Math.round(window.innerWidth * dpr);
+const baseHeight = Math.round(window.innerHeight * dpr);
+
 var config = {
     type: Phaser.AUTO,
     parent: 'phaser-game',
@@ -61,8 +66,10 @@ var config = {
         createContainer: true
     },
     scale: {
-        mode: Phaser.Scale.RESIZE,
-        autoCenter: Phaser.Scale.CENTER_BOTH
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: baseWidth,
+        height: baseHeight
     },
     render: {
         pixelArt: false,
@@ -71,6 +78,34 @@ var config = {
 };
 
 var game = new Phaser.Game(config);
+
+// Handle orientation changes and resizes - update game dimensions
+function updateGameSize() {
+    const newDpr = Math.min(window.devicePixelRatio || 1, 3);
+    const newWidth = Math.round(window.innerWidth * newDpr);
+    const newHeight = Math.round(window.innerHeight * newDpr);
+    
+    // Only resize if dimensions changed significantly (more than 10 pixels)
+    const currentWidth = game.scale.gameSize.width;
+    const currentHeight = game.scale.gameSize.height;
+    
+    if (Math.abs(newWidth - currentWidth) > 10 || Math.abs(newHeight - currentHeight) > 10) {
+        game.scale.setGameSize(newWidth, newHeight);
+    }
+}
+
+// Debounce resize to avoid excessive updates
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(updateGameSize, 100);
+});
+
+// Also handle orientation change specifically for mobile
+window.addEventListener('orientationchange', () => {
+    // Wait for the orientation change to complete
+    setTimeout(updateGameSize, 200);
+});
 
 // Set document title from GlobalSettings
 document.title = `${GlobalSettings.gameName} v${GlobalSettings.version}`;

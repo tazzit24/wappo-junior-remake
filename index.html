@@ -5,71 +5,72 @@
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="manifest" href="manifest.json">
-        <title>Guappo Junior (Wappo Junior) — Puzzle Game</title>
-        <!-- SEO meta tags -->
-        <meta name="description" content="Guappo Junior (Wappo Junior) — A fan puzzle game remake featuring grid-based levels. Play online or download as a PWA">
-        <meta name="keywords" content="Guappo Junior, Wappo Junior, puzzle game, web game, HTML5 game, Siemens, Softex Digital">
-        <meta name="robots" content="index, follow">
-        <link rel="canonical" href="/">
-        <meta name="theme-color" content="#191217">
-        <!-- Open Graph / Social -->
-        <meta property="og:title" content="Guappo Junior (Wappo Junior) — Puzzle Game">
-        <meta property="og:description" content="Guappo Junior (Wappo Junior) — A fan puzzle game remake featuring grid-based levels. Play online or download as a PWA">
-        <meta property="og:type" content="website">
-        <meta property="og:image" content="/assets/images/Guappo_Junior_logo.png">
-        <meta property="og:url" content="/">
-        <meta property="og:site_name" content="Guappo Junior (Wappo Junior)">
-        <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="Guappo Junior (Wappo Junior)">
-        <meta name="twitter:description" content="Guappo Junior (Wappo Junior) — A fan puzzle game remake featuring grid-based levels. Play online or download as a PWA">
-        <meta name="twitter:image" content="/assets/images/Guappo_Junior_logo.png">
-        <!-- Structured Data: VideoGame / SoftwareApplication (schema.org) -->
-        <script type="application/ld+json">
-        {
-            "@context": "https://schema.org",
-            "@type": "VideoGame",
-            "name": "Guappo Junior (Wappo Junior)",
-            "url": "",
-            "description": "Guappo Junior (Wappo Junior) — A fan puzzle game remake featuring grid-based levels. Play online or download as a PWA",
-            "image": "/assets/images/Guappo_Junior_logo.png",
-            "author": {
-                "@type": "Person",
-                "name": "Tazzit24 - Giancarlo M."
-            },
-            "keywords": "Guappo Junior, Wappo Junior, puzzle game, Siemens, Softex Digital",
-            "applicationCategory": "Game",
-            "inLanguage": "en"
-        }
-        </script>
-        <!-- Make canonical/og:url absolute for crawlers; set dynamically to avoid hardcoding origin -->
-        <script>
-            (function() {
-                try {
-                    var canonical = document.querySelector('link[rel="canonical"]');
-                    var origin = location.origin || (location.protocol + '//' + location.host);
-                    if (canonical && !canonical.href.startsWith('http')) {
-                        canonical.href = origin + canonical.getAttribute('href');
-                    }
-                    var ogUrl = document.querySelector('meta[property="og:url"]');
-                    if (ogUrl && (!ogUrl.content || !ogUrl.content.startsWith('http'))) {
-                        ogUrl.content = origin + (ogUrl.content || '/');
-                    }
-                    var ogImage = document.querySelector('meta[property="og:image"]');
-                    if (ogImage && !ogImage.content.startsWith('http')) {
-                        ogImage.content = origin + ogImage.content;
-                    }
-                    var ld = document.querySelector('script[type="application/ld+json"]');
-                    if (ld) {
-                        try {
-                            var obj = JSON.parse(ld.textContent);
-                            if (!obj.url) obj.url = origin + '/';
-                            if (!obj.image || !obj.image.startsWith('http')) obj.image = origin + obj.image;
-                            ld.textContent = JSON.stringify(obj, null, 2);
-                        } catch(e) { /* ignore */ }
-                    }
-                } catch(e) { console.warn('SEO canonical update failed', e); }
-            })();
-        </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Guappo Junior (Wappo Junior) — Puzzle Game</title>
+    <!-- SEO meta tags -->
+    <meta name="description" content="Guappo Junior (Wappo Junior) — A fan puzzle game remake featuring grid-based levels. Play online or download as a PWA">
+    <meta name="keywords" content="Guappo Junior, Wappo Junior, puzzle game, web game, HTML5 game, Siemens, Softex Digital">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="/">
+    <meta name="theme-color" content="#191217">
+    <!-- Open Graph / Social -->
+    <meta property="og:title" content="Guappo Junior (Wappo Junior) — Puzzle Game">
+    <meta property="og:description" content="Guappo Junior (Wappo Junior) — A fan puzzle game remake featuring grid-based levels. Play online or download as a PWA">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/assets/images/Guappo_Junior_logo.png">
+    <meta property="og:url" content="/">
+    <meta property="og:site_name" content="Guappo Junior (Wappo Junior)">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Guappo Junior (Wappo Junior)">
+    <meta name="twitter:description" content="Guappo Junior (Wappo Junior) — A fan puzzle game remake featuring grid-based levels. Play online or download as a PWA">
+    <meta name="twitter:image" content="/assets/images/Guappo_Junior_logo.png">
+    <!-- Structured Data: VideoGame / SoftwareApplication (schema.org) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Guappo Junior (Wappo Junior)",
+        "url": "",
+        "description": "Guappo Junior (Wappo Junior) — A fan puzzle game remake featuring grid-based levels. Play online or download as a PWA",
+        "image": "/assets/images/Guappo_Junior_logo.png",
+        "author": {
+            "@type": "Person",
+            "name": "Tazzit24 - Giancarlo M."
+        },
+        "keywords": "Guappo Junior, Wappo Junior, puzzle game, Siemens, Softex Digital",
+        "applicationCategory": "Game",
+        "inLanguage": "en"
+    }
+    </script>
+    <!-- Make canonical/og:url absolute for crawlers; set dynamically to avoid hardcoding origin -->
+    <script>
+        (function() {
+            try {
+                var canonical = document.querySelector('link[rel="canonical"]');
+                var origin = location.origin || (location.protocol + '//' + location.host);
+                if (canonical && !canonical.href.startsWith('http')) {
+                    canonical.href = origin + canonical.getAttribute('href');
+                }
+                var ogUrl = document.querySelector('meta[property="og:url"]');
+                if (ogUrl && (!ogUrl.content || !ogUrl.content.startsWith('http'))) {
+                    ogUrl.content = origin + (ogUrl.content || '/');
+                }
+                var ogImage = document.querySelector('meta[property="og:image"]');
+                if (ogImage && !ogImage.content.startsWith('http')) {
+                    ogImage.content = origin + ogImage.content;
+                }
+                var ld = document.querySelector('script[type="application/ld+json"]');
+                if (ld) {
+                    try {
+                        var obj = JSON.parse(ld.textContent);
+                        if (!obj.url) obj.url = origin + '/';
+                        if (!obj.image || !obj.image.startsWith('http')) obj.image = origin + obj.image;
+                        ld.textContent = JSON.stringify(obj, null, 2);
+                    } catch(e) { /* ignore */ }
+                }
+            } catch(e) { console.warn('SEO canonical update failed', e); }
+        })();
+    </script>
 
     <script>
         (function() {
