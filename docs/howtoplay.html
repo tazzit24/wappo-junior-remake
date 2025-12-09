@@ -89,19 +89,22 @@
     <div class="section">
         <h2>Game Elements</h2>
         <div class="element-grid">
-            <!-- Heroes -->
+            <!-- First line -->
             <div class="element-card">
                 <img src="../assets/images/wappo.png" alt="Guappo">
                 <div class="element-info">
                     <h4>Guappo (Hero)</h4>
-                    <p>The main character. Moves 1 step per turn. You control his direction.</p>
+                    <p>The main character. Moves <b>1 step</b> per turn. You control his direction.</p>
                 </div>
             </div>
+            <div class="element-card">
+            </div>
+            <!-- Second line -->
             <div class="element-card">
                 <img src="../assets/images/friend1.png" alt="Slow Friend">
                 <div class="element-info">
                     <h4>Slow Friend</h4>
-                    <p>Guappo's bear friends. They move 1 step per turn in the same direction as Guappo.</p>
+                    <p>Guappo's bear friends. They move <b>1 step</b> per turn in the same direction as Guappo.</p>
                 </div>
             </div>
             <div class="element-card">
@@ -111,17 +114,14 @@
                     <p>Some of Guappo's friends move <b>2 steps</b> per turn in the chosen direction. They can reach goals or danger faster, so plan carefully!</p>
                 </div>
             </div>
-
-            <!-- Goal -->
-            <div class="element-card">
+            <!-- Other elements -->
+              <div class="element-card">
                 <img src="../assets/images/beehive.png" alt="Beehive">
                 <div class="element-info">
                     <h4>Beehive (Goal)</h4>
                     <p>The destination. Every bear must be standing on a beehive to complete the level.</p>
                 </div>
             </div>
-
-
             <div class="element-card">
                 <img src="../assets/images/gap.png" alt="Gap">
                 <div class="element-info">
@@ -137,52 +137,51 @@
         <p>Enemies move <b>after</b> your turn. Avoid them at all costs!</p>
         
         <div class="element-grid">
-            <!-- Slow Enemies -->
+            <!-- Horizontal Bees -->
             <div class="element-card">
-                <img src="../assets/images/eh1.png" alt="Horizontal Enemy">
+                <img src="./img/eh1.png" alt="Horizontal Enemy">
                 <div class="element-info">
                     <h4>Horizontal Bee (Slow)</h4>
                     <p>Moves <b>1 step</b> left or right. Bounces off walls.</p>
                 </div>
             </div>
             <div class="element-card">
-                <img src="../assets/images/ev1.png" alt="Vertical Enemy">
+                <img src="./img/eh2.png" alt="Fast Horizontal Enemy">
+                <div class="element-info">
+                    <h4>Horizontal Bee (Fast)</h4>
+                    <p>Moves <b>2 steps</b> per turn.</p>
+                </div>
+            </div>
+            <!-- Vertical Bees -->
+            <div class="element-card">
+                <img src="./img/ev1.png" alt="Vertical Enemy">
                 <div class="element-info">
                     <h4>Vertical Bee (Slow)</h4>
                     <p>Moves <b>1 step</b> up or down. Bounces off walls.</p>
                 </div>
             </div>
             <div class="element-card">
-                <img src="../assets/images/ed1.png" alt="Diagonal Enemy">
-                <div class="element-info">
-                    <h4>Diagonal Bee (Slow)</h4>
-                    <p>Moves <b>1 step</b> diagonally. Bounces off walls.</p>
-                </div>
-            </div>
-
-            <!-- Fast Enemies -->
-            <div class="element-card">
-                <img src="../assets/images/eh2.png" alt="Fast Horizontal Enemy">
-                <div class="element-info">
-                    <h4>Horizontal Bee (Fast)</h4>
-                    <p>Moves <b>2 steps</b> per turn.</p>
-                </div>
-            </div>
-            <div class="element-card">
-                <img src="../assets/images/ev2.png" alt="Fast Vertical Enemy">
+                <img src="./img/ev2.png" alt="Fast Vertical Enemy">
                 <div class="element-info">
                     <h4>Vertical Bee (Fast)</h4>
                     <p>Moves <b>2 steps</b> per turn.</p>
                 </div>
             </div>
+            <!-- Diagonal Bees -->
             <div class="element-card">
-                <img src="../assets/images/ed2.png" alt="Fast Diagonal Enemy">
+                <img src="./img/ed1.png" alt="Diagonal Enemy">
+                <div class="element-info">
+                    <h4>Diagonal Bee (Slow)</h4>
+                    <p>Moves <b>1 step</b> diagonally. Bounces off walls.</p>
+                </div>
+            </div>
+            <div class="element-card">
+                <img src="./img/ed2.png" alt="Fast Diagonal Enemy">
                 <div class="element-info">
                     <h4>Diagonal Bee (Fast)</h4>
                     <p>Moves <b>2 steps</b> per turn.</p>
                 </div>
             </div>
-
             <!-- Hazards -->
             <div class="element-card">
                 <img src="../assets/images/trap.png" alt="Trap">
@@ -197,7 +196,7 @@
     <div class="section">
         <h2>Rules & Mechanics</h2>
         <ul>
-            <li><b>Synchronized Movement:</b> When you swipe or press a key, <b>ALL</b> bears move in that direction.</li>
+            <li><b>Synchronized Movement:</b> When you swipe or press an arrow key, <b>ALL</b> bears move in that direction.</li>
             <li><b>Turn Order:</b>
                 <ol>
                     <li>Guappo moves.</li>
