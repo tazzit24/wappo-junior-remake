@@ -248,4 +248,61 @@ export class Utils {
         return { updateProgress, destroyProgress };
     }
 
+    // Provides a small helper object to keep the screen awake while a scene is active.
+    static createWakeLockManager() {
+        let wakeLockSentinel = null;
+        let wakeLockVisibilityHandler = null;
+
+        const handleWakeLockRelease = () => {
+            wakeLockSentinel = null;
+        };
+
+        const requestWakeLock = async () => {
+            if (typeof navigator === 'undefined' || !('wakeLock' in navigator)) {
+                return;
+            }
+            if (wakeLockSentinel) {
+                return;
+            }
+            try {
+                wakeLockSentinel = await navigator.wakeLock.request('screen');
+                wakeLockSentinel.addEventListener('release', handleWakeLockRelease);
+            } catch (err) {
+                console.warn('Unable to acquire screen wake lock', err);
+            }
+        };
+
+        const setupWakeLock = () => {
+            if (typeof navigator === 'undefined' || typeof document === 'undefined' || !('wakeLock' in navigator)) {
+                console.log('Screen Wake Lock API not supported');
+                return;
+            }
+            wakeLockVisibilityHandler = () => {
+                if (document.visibilityState === 'visible') {
+                    requestWakeLock();
+                }
+            };
+            document.addEventListener('visibilitychange', wakeLockVisibilityHandler);
+            requestWakeLock();
+        };
+
+        const releaseWakeLock = async () => {
+            if (wakeLockVisibilityHandler && typeof document !== 'undefined') {
+                document.removeEventListener('visibilitychange', wakeLockVisibilityHandler);
+                wakeLockVisibilityHandler = null;
+            }
+            if (wakeLockSentinel) {
+                try {
+                    wakeLockSentinel.removeEventListener('release', handleWakeLockRelease);
+                    await wakeLockSentinel.release();
+                } catch (err) {
+                    console.warn('Error releasing screen wake lock', err);
+                }
+                wakeLockSentinel = null;
+            }
+        };
+
+        return { setupWakeLock, releaseWakeLock };
+    }
+
 }

@@ -107,6 +107,7 @@ export class SceneMain extends Phaser.Scene {
     dragFeedback = null;
     dragFeedbackEnabled = true;
     music = null;
+    wakeLockManager = null;
 
     constructor() {
         super('SceneMain');
@@ -206,6 +207,12 @@ export class SceneMain extends Phaser.Scene {
 
         // Initial layout update
         this.updateLayout();
+
+        // Keep the screen awake while this scene is active
+        this.wakeLockManager = Utils.createWakeLockManager();
+        if (this.wakeLockManager) {
+            this.wakeLockManager.setupWakeLock();
+        }
     }
 
     calculateLayout() {
@@ -1015,6 +1022,11 @@ export class SceneMain extends Phaser.Scene {
 
     onSceneShutdown() {
         console.log("SceneMain shutdown initiated.");
+
+        // Release screen wake lock when leaving the scene
+        if (this.wakeLockManager) {
+            this.wakeLockManager.releaseWakeLock();
+        }
         
         // Stop music
         this.stopMusic();
