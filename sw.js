@@ -34,7 +34,7 @@ const urlsToCache = [
   './src/ui/SolverDialog.js',
   './src/ui/SpaceSlider.js',
   './assets/images/beehive.png',
-  './assets/images/BoardBackground.png',
+  './assets/images/BoardBackground.jpg',
   './assets/images/ed1.png',
   './assets/images/ed2.png',
   './assets/images/eh1.png',
@@ -57,7 +57,8 @@ const urlsToCache = [
   './assets/images/vine.png',
   './assets/images/volume_off.png',
   './assets/images/volume_on.png',
-  './assets/images/wappo.png'
+  './assets/images/wappo.png',
+  './assets/audio/in_game_music.mp3'
 ];
 
 // Listen for messages from the main page

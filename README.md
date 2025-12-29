@@ -1,15 +1,16 @@
 # Guappo Junior: The Comeback Story Nobody Asked For (But Got Anyway)
 
+WORK IN PROGRESS... beta released.
 ---
 
 ## Description
 
 Welcome, brave internet traveler, to **Guappo Junior**!  
-This isn’t your grandma’s Siemens phone game—though it started there. It’s a fan-made, stubbornly recreated version of the **abandonware classic “Wappo Junior.”** Back in the day, you guided Wappo, a spirited kid, and his pals to the **honeycombs—dodging traps and bees—at the same time.** Think synchronized honey-gathering.  
+This isn’t your grandma’s Siemens phone game—though it started there. It’s a fan-made, stubbornly recreated version of the **abandonware classic “Wappo Junior.”** Back in the day, you guided Wappo, a spirited kid, and his pals to the **honeycombs—dodging traps and bees—at the same time.** Think synchronized honey-gathering. The original game concept was published by Robert Abbott (RIP) and then implemented on 'Theseus and the Minotaur' and 'Mummy Maze'. Wappo Junior was a simplified/alternate version of the game.  
 
-⚠️ Don’t confuse **Wappo Junior** with **Wappo** or **Wappo 2** (already remastered by other fans). This is its own beast. Enjoy!
+⚠️ Don’t confuse **Wappo Junior** with **Wappo** or **Wappo 2** (already remastered by other fans and also based on the same concept). This is its own beast. Enjoy!
 
-👉 Live demo: https://tazzit24.github.io/Guappo_Junior_Phaser_With_Solver/
+👉 Live demo: https://tazzit24.github.io/Guappo_Junior_Phaser_With_Solver/  (The game is installable as a PWA in any supported browser)
 
 <img width="408" height="476" alt="image" src="https://github.com/user-attachments/assets/66ede71c-e9a5-4675-9926-9f13952587e1" />
 
@@ -67,13 +68,13 @@ My Siemens phone died before I could finish “Wappo Junior.” That unfinished 
 
 ---
 
-## Naming Story: From Wappo to Guappo
+## Naming Choice: From Wappo to Guappo
 
-“Wappo Junior” had to go. Enter **Guappo** (not *guapo*). In Italian slang, it means “ruffian” or “thug.” Perfect fit.  
+Enter **Guappo** (not *guapo*). In Italian slang, it means “ruffian” or “thug.” Perfect fit for a game all about the quest for honey.  
 
 Reasons:  
 1. **Fresh Identity:** Two decades of abandonware deserved a new name—nostalgic whisper, modern scream.  
-2. **Cultural Upgrade:** Mafia bears > outdated caricatures. I’m Italian, I like bears, and they’re easy to draw. So: **cosmonaut mafiosi bears.** Minimal animation required. Win-win.
+2. **Cultural Upgrade:** Mafia bears > outdated caricatures. I’m Belgo-Italian, I like bears, and they’re easy to draw. So: **cosmonaut mafiosi bears.** Minimal animation required. Win-win.
 
 ---
 
@@ -127,3 +128,5 @@ Beyond these tweaks, there’s no active maintenance, no grand roadmap, no endle
 ## Fun Fact
 
 Hidden in old files: a blueprint for a new character, **“Don.”** He was meant to move diagonally, independent of the crew. Rules were never written, code never made. A ghost I couldn’t recruit.
+
+

@@ -204,41 +204,45 @@ export class SceneScores extends Phaser.Scene {
             strokeThickness: 3
         };
         
-        // Calculations for a truly responsive grid
-        this.availableHeight = gameHeight - this.navHeight - 40;
-        this.availableWidth = gameWidth - 40;
+        // Calculations for a responsive grid: fixed 5 columns, maximize width then shrink to fit height
+        this.panelPadding = 10;
+        this.sliderWidth = 0; // slider removed
+        this.availableHeight = gameHeight - this.navHeight - 30;
 
-        // Compute the number of items to display on this page
-        const itemsThisPage = Math.min(this.levelsPerPage, Math.max(0, 
-            this.levelsJson.levels.reduce((count, level) => 
+        const itemsThisPage = Math.min(this.levelsPerPage, Math.max(0,
+            this.levelsJson.levels.reduce((count, level) =>
                 parseInt(level.level) > 0 ? count + 1 : count, 0) - this.startIndex));
-        
+
+        const fixedCols = 5;
+        const cellSpacing = 10;
+
         if (itemsThisPage > 0) {
-            // On cherche le plus grand nombre de colonnes possible avec des cases >= 110px
-            let bestCols = 5;
-            let bestCellSize = 0;
-            for (let c = 5; c >= 1; c--) {
-                const size = Math.floor((this.availableWidth - (c - 1) * 10) / c);
-                if (size >= 110) {
-                    bestCols = c;
-                    bestCellSize = size;
-                    break;
-                }
-            }
-            this.cols = bestCols;
-            this.cellSize = Math.min((bestCellSize ? bestCellSize + 5 : 115), 145); // +5px only on the cell
+            this.cols = fixedCols;
             this.rows = Math.max(1, Math.ceil(itemsThisPage / this.cols));
+
+            const availableWidth = gameWidth - this.sliderWidth - this.panelPadding * 2;
+            let cellSize = Math.floor((availableWidth - (this.cols - 1) * cellSpacing) / this.cols);
+
+            const availableGridHeight = this.availableHeight - this.panelPadding * 2;
+            const neededHeight = cellSize * this.rows + (this.rows - 1) * cellSpacing;
+            if (neededHeight > availableGridHeight) {
+                cellSize = Math.floor((availableGridHeight - (this.rows - 1) * cellSpacing) / this.rows);
+                cellSize = Math.max(cellSize, 40); // safeguard for tiny screens
+            }
+
+            this.cellSize = cellSize;
         } else {
-            // Fallback for empty page
             this.cols = 1;
             this.rows = 1;
-            this.cellSize = 115;
+            this.cellSize = 100;
         }
+        this.cellSpacing = cellSpacing;
 
-        // Panel occupies the available height; the grid will scroll if needed
-        this.panelWidth = this.cellSize * this.cols + (this.cols - 1) * 10;
-        this.panelHeight = this.availableHeight;
-        this.panelY = this.navHeight + 20 + this.panelHeight / 2;
+        const gridWidth = this.cellSize * this.cols + (this.cols - 1) * this.cellSpacing;
+        const gridHeight = this.cellSize * this.rows + (this.rows - 1) * this.cellSpacing;
+        this.panelWidth = gridWidth + this.panelPadding * 2;
+        this.panelHeight = Math.min(gridHeight + this.panelPadding * 2, this.availableHeight);
+        this.panelY = this.navHeight + 10 + this.panelHeight / 2;
     }
 
     handleResize() {
@@ -259,7 +263,7 @@ export class SceneScores extends Phaser.Scene {
     createResponsiveGrid() {
         const rexUI = this.rexUI;
         
-        // Create the panel with the new dimensions
+        // Create the panel with the new dimensions (no slider)
         this.panel = rexUI.add.scrollablePanel({
             x: this.centerX,
             y: this.panelY,
@@ -273,18 +277,15 @@ export class SceneScores extends Phaser.Scene {
                     row: this.rows,
                     columnProportions: 0,
                     rowProportions: 0,
-                    space: { column: 10, row: 10 }
+                    space: { column: this.cellSpacing, row: this.cellSpacing }
                 }),
             },
-            slider: {
-                track: this.add.rectangle(0, 0, 15, 40, 0x666666),
-                thumb: this.add.rectangle(0, 0, 15, 40, 0x4a90e2),
-            },
+            slider: false,
             mouseWheelScroller: { focus: false, speed: 0.1 },
             clamperEnable: true,
             header: false,
             footer: false,
-            space: { left: 10, right: 10, top: 10, bottom: 10 },
+            space: { left: this.panelPadding, right: this.panelPadding, top: this.panelPadding, bottom: this.panelPadding },
         }).layout();
 
         // Fill the grid - generate items on the fly without copying
@@ -393,16 +394,16 @@ export class SceneScores extends Phaser.Scene {
     }
 
     createBackButton() {
-        // Compute the left edge position of the grid
-        const panelLeft = this.panel.x - this.panelWidth / 2;
-        
         // Create back button with arrow icon
-        this.backBtn = this.add.text(panelLeft, this.navY, '↩', this.homeBtnStyle)
+        this.backBtn = this.add.text(0, this.navY, '↩', this.homeBtnStyle)
             .setOrigin(0.5)
             .setInteractive({ cursor: 'pointer' })
             .on('pointerdown', () => this.scene.start('SceneHome'))
             .on('pointerover', () => this.backBtn.setColor('#FFFFFF'))
             .on('pointerout', () => this.backBtn.setColor('#4a90e2'));
+
+        // Position after measuring width
+        this.updateBackButtonPosition();
     }
     
     createNavContainer(startIndex, endIndex) {
@@ -486,7 +487,8 @@ export class SceneScores extends Phaser.Scene {
     updateBackButtonPosition() {
         if (this.backBtn) {
             const panelLeft = this.panel.x - this.panelWidth / 2;
-            this.backBtn.setPosition(panelLeft, this.navY);
+            const btnX = panelLeft + this.panelPadding + this.backBtn.width / 2;
+            this.backBtn.setPosition(btnX, this.navY);
         }
     }
 

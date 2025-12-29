@@ -23,10 +23,6 @@ export class SceneMain extends Phaser.Scene {
     friends = [];
     enemies = [];
     cursors;
-    btnUp = null;
-    btnDown = null;
-    btnLeft = null;
-    btnRight = null;
     btnHome = null;
     btnMusic = null;
     btnReload = null;
@@ -34,7 +30,6 @@ export class SceneMain extends Phaser.Scene {
     btnNext = null;
 
     // UI Containers
-    controlsContainer = null; // Container for the control buttons
     uiContainer = null; // Container for the UI elements
     gridContainer = null; // Container for the grid and pieces
     headerBackground = null; // Background for the header area in portrait mode
@@ -50,7 +45,7 @@ export class SceneMain extends Phaser.Scene {
 
     // Utility methods to centralize control management
     disableAllControls() {
-        [this.btnUp, this.btnDown, this.btnLeft, this.btnRight, this.btnHome, this.btnMusic, this.btnReload, this.btnPrev, this.btnNext].forEach(btn => {
+        [this.btnHome, this.btnMusic, this.btnReload, this.btnPrev, this.btnNext].forEach(btn => {
             if (btn && btn.disableButtonInteractive) btn.disableButtonInteractive();
         });
         if (this.homeIcon) this.homeIcon.setEnabled(false);
@@ -61,7 +56,7 @@ export class SceneMain extends Phaser.Scene {
     }
 
     enableAllControls() {
-        [this.btnUp, this.btnDown, this.btnLeft, this.btnRight, this.btnHome, this.btnMusic, this.btnReload, this.btnPrev, this.btnNext].forEach(btn => {
+        [this.btnHome, this.btnMusic, this.btnReload, this.btnPrev, this.btnNext].forEach(btn => {
             if (btn && btn.enableButtonInteractive) btn.enableButtonInteractive();
         });
         if (this.homeIcon) this.homeIcon.setEnabled(true);
@@ -111,6 +106,7 @@ export class SceneMain extends Phaser.Scene {
     gridCells = [];
     dragFeedback = null;
     dragFeedbackEnabled = true;
+    music = null;
 
     constructor() {
         super('SceneMain');
@@ -126,7 +122,7 @@ export class SceneMain extends Phaser.Scene {
         this.load.on('complete', progress.destroyProgress);
 
         !this.cache.text.exists('levels') ? this.load.text('levels', 'assets/levels/levels.json') : null;
-        !this.textures.exists('boardBackground') ? this.load.image('boardBackground', 'assets/images/BoardBackground.png') : null;
+        !this.textures.exists('boardBackground') ? this.load.image('boardBackground', 'assets/images/BoardBackground.jpg') : null;
         !this.textures.exists('vine') ? this.load.image('vine', 'assets/images/vine.png') : null;
         !this.textures.exists('gap') ? this.load.image('gap', 'assets/images/gap.png') : null;
         !this.textures.exists('trap') ? this.load.image('trap', 'assets/images/trap.png') : null;
@@ -149,6 +145,9 @@ export class SceneMain extends Phaser.Scene {
         !this.textures.exists('volume_on') ? this.load.image('volume_on', 'assets/images/volume_on.png') : null;
         !this.textures.exists('volume_off') ? this.load.image('volume_off', 'assets/images/volume_off.png') : null;
         !this.textures.exists('hint') ? this.load.image('hint', 'assets/images/hint.png') : null;
+        
+        // Load audio
+        !this.cache.audio.exists('in_game_music') ? this.load.audio('in_game_music', 'assets/audio/in_game_music.mp3') : null;
     }
 
     create() {
@@ -201,6 +200,9 @@ export class SceneMain extends Phaser.Scene {
         this.createControlButtons();
         // Input
         this.setupInput();
+
+        // Initialize music
+        this.initializeMusic();
 
         // Initial layout update
         this.updateLayout();
@@ -443,10 +445,6 @@ export class SceneMain extends Phaser.Scene {
 
     createControlButtons() {
         // Destroy existing containers and buttons if present
-        if (this.controlsContainer) {
-            this.controlsContainer.destroy();
-            this.controlsContainer = null;
-        }
         
         // Always destroy existing header buttons (they are added directly to scene)
         if (this.btnHome && this.btnHome.scene) {
@@ -481,10 +479,6 @@ export class SceneMain extends Phaser.Scene {
         }
         
         // Clear button references
-        this.btnUp = null;
-        this.btnDown = null;
-        this.btnLeft = null;
-        this.btnRight = null;
         this.btnHome = null;
         this.btnMusic = null;
         this.btnReload = null;
@@ -492,9 +486,6 @@ export class SceneMain extends Phaser.Scene {
         this.btnNext = null;
 
         const { width, height } = this.scale.gameSize;
-        
-        // Create the main controls container
-        this.controlsContainer = this.add.container(0, 0);
         
         // Compact navigation buttons
         const navBtnSize = Math.max(Math.min(this.cellSize * 0.5, 50), 30);
@@ -539,23 +530,14 @@ export class SceneMain extends Phaser.Scene {
             const gridRightX = this.gridOffsetX + (this.cellSize * this.gridSize);
             const containerX = gridRightX + sideAreaWidth / 2;
             const containerY = this.gridOffsetY + (this.cellSize * this.gridSize) / 2;
-            this.controlsContainer.setPosition(containerX, containerY);
             // Compact navigation buttons arranged in cross pattern
-            this.btnUp = this.createButton(0, -navBtnSpacing * 1.5, '↑', navButtonStyle, () => this.fireUserInput(Enum.DIRECTION.NORTH));
-            this.btnLeft = this.createButton(-navBtnSpacing * 0.6, -navBtnSpacing * 0.5, '←', navButtonStyle, () => this.fireUserInput(Enum.DIRECTION.WEST));
-            this.btnRight = this.createButton(navBtnSpacing * 0.6, -navBtnSpacing * 0.5, '→', navButtonStyle, () => this.fireUserInput(Enum.DIRECTION.EAST));
-            this.btnDown = this.createButton(0, navBtnSpacing * 0.5, '↓', navButtonStyle, () => this.fireUserInput(Enum.DIRECTION.SOUTH));
+            // Directional arrows removed
             
             // Solve button just below navigation
             const solveY = navBtnSpacing * 0.5 + regularBtnSize + 10;
             // this.btnSolve = this.createButton(0, solveY, 'SOLVE', regularButtonStyle, () => this.runSolver());
             // this.btnSolve.setOrigin(0.5, 0);
             
-            // Add navigation buttons to container
-            this.controlsContainer.add([
-                this.btnUp, this.btnLeft, this.btnRight, this.btnDown
-                // this.btnSolve
-            ]);
             // Hidden buttons
             this.btnPrev = this.createHiddenButton('PREV', () => this.fireChangeLevel(-1));
             this.btnNext = this.createHiddenButton('NEXT', () => this.fireChangeLevel(1));
@@ -584,17 +566,12 @@ export class SceneMain extends Phaser.Scene {
             const containerX = this.gridOffsetX + (this.cellSize * this.gridSize) / 2;
             const containerY = gridBottomY + containerMargin;
             
-            this.controlsContainer.setPosition(containerX, containerY);
-
             // Navigation button cluster (centered in container)
             const navClusterHeight = navBtnSpacing * 1.6;
             const navClusterCenterY = navClusterHeight / 2;
             
             // Navigation buttons positioned relative to container center
-            this.btnUp = this.createButton(0, navClusterCenterY - navBtnSpacing * 0.8, '↑', navButtonStyle, () => this.fireUserInput(Enum.DIRECTION.NORTH));
-            this.btnLeft = this.createButton(-navBtnSpacing, navClusterCenterY, '←', navButtonStyle, () => this.fireUserInput(Enum.DIRECTION.WEST));
-            this.btnRight = this.createButton(navBtnSpacing, navClusterCenterY, '→', navButtonStyle, () => this.fireUserInput(Enum.DIRECTION.EAST));
-            this.btnDown = this.createButton(0, navClusterCenterY + navBtnSpacing * 0.8, '↓', navButtonStyle, () => this.fireUserInput(Enum.DIRECTION.SOUTH));
+            // Directional arrows removed
             
             // Solve button remains in the bottom controls
             const bottomRowSpacing = Math.max(this.cellSize * 0.4, 25);
@@ -606,12 +583,6 @@ export class SceneMain extends Phaser.Scene {
             const secondRowY = bottomRowY + regularBtnSize + 10;
             // this.btnSolve = this.createButton(reloadX, secondRowY, 'SOLVE', regularButtonStyle, () => this.runSolver());
             // this.btnSolve.setOrigin(0.5, 0.5);
-
-            // Add navigation buttons to container
-            this.controlsContainer.add([
-                this.btnUp, this.btnLeft, this.btnRight, this.btnDown
-                // this.btnSolve
-            ]);
             
             // Hidden buttons
             this.btnPrev = this.createHiddenButton('PREV', () => this.fireChangeLevel(-1));
@@ -880,8 +851,13 @@ export class SceneMain extends Phaser.Scene {
             this.enableAllControls();
             this.isAnimating = false;
         } else {
-            // For end-of-game (win/lose), trigger end-of-game flow
-            // AFTER animations have completed
+            // For end-of-game (win/lose), trigger end-of-game flow AFTER animations
+            // Start music fade (non-blocking) and drive the 2s hold using a tint overlay
+            this.fadeMusicOut(2000, gameStatus.isWon);
+
+            // Apply a colored tint and hold for 2 seconds (ensures consistent pause even with music off)
+            await this.showEndTint(gameStatus.isWon);
+
             if (gameStatus.isWon) {
                 this.scene.pause();
                 this.scene.launch("SceneGameover", {
@@ -1040,14 +1016,13 @@ export class SceneMain extends Phaser.Scene {
     onSceneShutdown() {
         console.log("SceneMain shutdown initiated.");
         
+        // Stop music
+        this.stopMusic();
+        
         // Remove resize listener
         this.scale.off('resize', this.handleResize, this);
         
         // Destroy containers which will destroy all contained elements
-        if (this.controlsContainer) {
-            this.controlsContainer.destroy();
-            this.controlsContainer = null;
-        }
         
         if (this.gridContainer) {
             this.gridContainer.destroy();
@@ -1138,8 +1113,109 @@ export class SceneMain extends Phaser.Scene {
             this.musicIcon.updateTexture(GlobalSettings.musicEnabled ? 0 : 1);
         }
         
-        // TODO: Implement actual music control logic here
-        // Example: this.sound.mute = !GlobalSettings.musicEnabled;
+        // Control music playback
+        if (GlobalSettings.musicEnabled) {
+            this.startMusic();
+        } else {
+            this.stopMusic();
+        }
+    }
+
+    initializeMusic() {
+        if (this.cache.audio.exists('in_game_music')) {
+            this.music = this.sound.add('in_game_music', { loop: true, volume: 0.5 });
+            if (GlobalSettings.musicEnabled) {
+                this.startMusic();
+            }
+        }
+    }
+
+    startMusic() {
+        if (this.music && !this.music.isPlaying) {
+            this.music.play();
+        }
+    }
+
+    stopMusic() {
+        if (this.music && this.music.isPlaying) {
+            this.music.stop();
+        }
+    }
+
+    fadeMusicOut(duration = 1000, isWon = false) {
+        return new Promise((resolve) => {
+            if (this.music && this.music.isPlaying) {
+                if (isWon) {
+                    // When won: fade out volume smoothly
+                    this.tweens.add({
+                        targets: this.music,
+                        volume: 0,
+                        duration: duration,
+                        onComplete: () => {
+                            if (this.music) {
+                                this.music.stop();
+                                this.music.setVolume(0.5); // Reset volume for next time
+                            }
+                            resolve();
+                        }
+                    });
+                } else {
+                    // When lost: detune down
+                    const detuneObj = { value: 0 };
+                    
+                    this.tweens.add({
+                        targets: detuneObj,
+                        value: -1200,
+                        duration: duration,
+                        onUpdate: () => {
+                            if (this.music) {
+                                this.music.setDetune(detuneObj.value);
+                            }
+                        },
+                        onComplete: () => {
+                            if (this.music) {
+                                this.music.stop();
+                                this.music.setDetune(0); // Reset detune for next time
+                            }
+                            resolve();
+                        }
+                    });
+                }
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    showEndTint(isWon) {
+        // Apply a colored overlay over the grid only for 2 seconds to signal outcome
+        return new Promise((resolve) => {
+            const gridWidth = this.cellSize * this.gridSize;
+            const gridHeight = this.cellSize * this.gridSize;
+            const posX = this.gridOffsetX + gridWidth / 2;
+            const posY = this.gridOffsetY + gridHeight / 2;
+
+            const color = isWon ? 0x2ecc71 : 0xe74c3c; // Green on win, red on loss
+            const overlay = this.add.rectangle(posX, posY, gridWidth, gridHeight, color)
+                .setOrigin(0.5, 0.5)
+                .setAlpha(0)
+                .setDepth(2000)
+                .setScrollFactor(0);
+
+            // Quick fade-in to a light tint, hold for the remainder
+            this.tweens.add({
+                targets: overlay,
+                alpha: { from: 0, to: 0.35 },
+                duration: 180,
+                ease: 'Sine.easeOut'
+            });
+
+            // Hold total of ~2s, then clean up
+            this.time.delayedCall(2000, () => {
+                overlay.destroy();
+                resolve();
+            });
+        });
     }
 
     showConfirmDialog(callback) {

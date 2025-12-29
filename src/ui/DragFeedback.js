@@ -5,6 +5,7 @@ export class DragFeedback {
         this.graphics.setDepth(depth).setVisible(false);
         this.pointerId = null;
         this.start = null;
+        this.circleRadius = 28; // Outer stroke radius
     }
 
     begin(pointer) {
@@ -21,46 +22,69 @@ export class DragFeedback {
         const { x: startX, y: startY } = this.start;
         const dx = pointer.x - startX;
         const dy = pointer.y - startY;
-        const distance = Math.min(Math.hypot(dx, dy), 200);
+        const distance = Math.hypot(dx, dy);
 
         this.graphics.clear();
         this._drawStartCircle(startX, startY);
 
-        if (distance <= 2) {
+        if (distance <= 30) {
             this.graphics.setVisible(true);
             return;
         }
 
-        const angle = Math.atan2(dy, dx);
-        const endX = startX + Math.cos(angle) * distance;
-        const endY = startY + Math.sin(angle) * distance;
+        // Determine dominant direction (4 directions: UP, DOWN, LEFT, RIGHT)
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
+        
+        let directionAngle;
+        if (absDx > absDy) {
+            // Horizontal direction
+            directionAngle = dx > 0 ? 0 : Math.PI; // RIGHT or LEFT
+        } else {
+            // Vertical direction
+            directionAngle = dy > 0 ? Math.PI / 2 : -Math.PI / 2; // DOWN or UP
+        }
+        
+        // Arrow parameters
+        const arrowLength = 40 + Math.min(distance / 5, 30); // Dynamic length
+        const arrowHeadLength = 20;
+        const arrowHeadWidth = 16;
+        const lineWidth = 6;
+        
+        // Calculate arrow start position (edge of circle)
+        const arrowStartX = startX + Math.cos(directionAngle) * this.circleRadius;
+        const arrowStartY = startY + Math.sin(directionAngle) * this.circleRadius;
+        
+        // Calculate arrow end position
+        const arrowEndX = arrowStartX + Math.cos(directionAngle) * arrowLength;
+        const arrowEndY = arrowStartY + Math.sin(directionAngle) * arrowLength;
 
-        this.graphics.lineStyle(6, 0xffc400, 0.9);
+        // Draw arrow line
+        this.graphics.lineStyle(lineWidth, 0xffc400, 0.9);
         this.graphics.beginPath();
-        this.graphics.moveTo(startX, startY);
-        this.graphics.lineTo(endX, endY);
+        this.graphics.moveTo(arrowStartX, arrowStartY);
+        this.graphics.lineTo(arrowEndX, arrowEndY);
         this.graphics.strokePath();
 
-        const headLength = 18;
-        const leftAngle = angle + Math.PI / 7;
-        const rightAngle = angle - Math.PI / 7;
+        // Draw arrow head
+        const headAngleOffset = Math.PI / 6;
+        const leftHeadX = arrowEndX - Math.cos(directionAngle - headAngleOffset) * arrowHeadLength;
+        const leftHeadY = arrowEndY - Math.sin(directionAngle - headAngleOffset) * arrowHeadLength;
+        const rightHeadX = arrowEndX - Math.cos(directionAngle + headAngleOffset) * arrowHeadLength;
+        const rightHeadY = arrowEndY - Math.sin(directionAngle + headAngleOffset) * arrowHeadLength;
 
         this.graphics.fillStyle(0xffc400, 0.95);
         this.graphics.beginPath();
-        this.graphics.moveTo(endX, endY);
-        this.graphics.lineTo(
-            endX - Math.cos(leftAngle) * headLength,
-            endY - Math.sin(leftAngle) * headLength
-        );
-        this.graphics.lineTo(
-            endX - Math.cos(rightAngle) * headLength,
-            endY - Math.sin(rightAngle) * headLength
-        );
+        this.graphics.moveTo(arrowEndX, arrowEndY);
+        this.graphics.lineTo(leftHeadX, leftHeadY);
+        this.graphics.lineTo(rightHeadX, rightHeadY);
         this.graphics.closePath();
         this.graphics.fillPath();
 
+        // Optional: glow at arrow tip
         this.graphics.fillStyle(0xffe066, 0.2);
-        this.graphics.fillCircle(endX, endY, 12);
+        this.graphics.fillCircle(arrowEndX, arrowEndY, 12);
+        
         this.graphics.setVisible(true);
     }
 
