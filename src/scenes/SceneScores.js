@@ -313,15 +313,8 @@ export class SceneScores extends Phaser.Scene {
                     baseScore = Number(level.detail.basescore);
                 }
 
-                // Compute number of stars:
-                let stars = 0;
-                if (scoreData) {
-                    if (bestScore > 0 && bestScore >= baseScore) {
-                        stars = 2;
-                    } else {
-                        stars = 1;
-                    }
-                }
+                // Compute number of stars using shared helper
+                const stars = scoreData ? Utils.getStarCountFromScore(bestScore, baseScore) : 0;
 
                 // Cell with responsive size
                 const bg = this.add.rectangle(0, 0, this.cellSize, this.cellSize, 0x2a2a3a).setStrokeStyle(1, 0xffffff);

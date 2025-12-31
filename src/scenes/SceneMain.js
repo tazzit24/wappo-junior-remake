@@ -866,12 +866,15 @@ export class SceneMain extends Phaser.Scene {
             await this.showEndTint(gameStatus.isWon);
 
             if (gameStatus.isWon) {
+                const finalScore = SaveGameHelper.getCalculatedScore(this.gameLogic.moves_counter, this.level.basescore);
+                const stars = Utils.getStarCountFromScore(finalScore, this.level.basescore);
                 this.scene.pause();
                 this.scene.launch("SceneGameover", {
                     "status": "WON", 
                     "choosenLevel": this.choosenLevel, 
                     "moves": this.gameLogic.moves_counter,
-                    "score": SaveGameHelper.getCalculatedScore(this.gameLogic.moves_counter, this.level.basescore)
+                    "score": finalScore,
+                    "stars": stars
                 });
             } else if (gameStatus.isLost) {
                 this.scene.pause();

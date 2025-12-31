@@ -305,4 +305,14 @@ export class Utils {
         return { setupWakeLock, releaseWakeLock };
     }
 
+    // Returns 1-2 stars based on score vs baseScore (shared across scenes)
+    static getStarCountFromScore(score, baseScore) {
+        const base = Number(baseScore);
+        const s = Number(score);
+        if (Number.isNaN(base) || Number.isNaN(s)) return 0;
+        if (s > 0 && s >= base) return 2;
+        if (s > 0) return 1;
+        return 1;
+    }
+
 }
