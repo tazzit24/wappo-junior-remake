@@ -1,5 +1,5 @@
 // Update this version manually when you deploy a new version
-const APP_VERSION = 'b.0.7';
+const APP_VERSION = '0.8-beta';
 const CACHE_NAME = `guappo-${APP_VERSION}`;
 const urlsToCache = [
   './',

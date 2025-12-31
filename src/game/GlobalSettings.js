@@ -1,6 +1,6 @@
 export const GlobalSettings = {
     gameName: 'Guappo Junior',
-    version: 'b.0.7',
+    version: '0.8-beta',
     musicEnabled: false,
     updatesEnabled: true,
     
