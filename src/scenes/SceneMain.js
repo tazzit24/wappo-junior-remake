@@ -129,8 +129,13 @@ export class SceneMain extends Phaser.Scene {
         !this.textures.exists('trap') ? this.load.image('trap', 'assets/images/trap.png') : null;
         !this.textures.exists('beehive') ? this.load.image('beehive', 'assets/images/beehive.png') : null;
         !this.textures.exists('wappo') ? this.load.image('wappo', 'assets/images/wappo.png') : null;
-        !this.textures.exists('friend_1') ? this.load.image('friend_1', 'assets/images/friend1.png') : null;
-        !this.textures.exists('friend_2') ? this.load.image('friend_2', 'assets/images/friend2.png') : null;
+        // Static friend images (hardcoded for SW cache) — format friend_<step>_<order>.png
+        !this.textures.exists('friend_1_0') ? this.load.image('friend_1_0', 'assets/images/friend_1_0.png') : null;
+        !this.textures.exists('friend_1_1') ? this.load.image('friend_1_1', 'assets/images/friend_1_1.png') : null;
+        !this.textures.exists('friend_2_0') ? this.load.image('friend_2_0', 'assets/images/friend_2_0.png') : null;
+        !this.textures.exists('friend_2_1') ? this.load.image('friend_2_1', 'assets/images/friend_2_1.png') : null;
+        !this.textures.exists('friend_1_2') ? this.load.image('friend_1_2', 'assets/images/friend_1_2.png') : null;
+        !this.textures.exists('friend_2_2') ? this.load.image('friend_2_2', 'assets/images/friend_2_2.png') : null;
         // Load vertical enemies as spritesheet with 2 frames: 0=up, 1=down
         !this.textures.exists('enemy_V_1') ? this.load.spritesheet('enemy_V_1', 'assets/images/ev1.png', { frameWidth: 200, frameHeight: 200 }) : null;
         !this.textures.exists('enemy_V_2') ? this.load.spritesheet('enemy_V_2', 'assets/images/ev2.png', { frameWidth: 200, frameHeight: 200 }) : null;
@@ -717,7 +722,14 @@ export class SceneMain extends Phaser.Scene {
         this.friends = this.gameLogic.friends;
         this.friends.forEach(friend => {
             if (!friend) return;
-            var img_friend = this.add.image(0, 0, 'friend_' + friend.getStep()); // Position initiale neutre
+            const key = `friend_${friend.getStep()}_${friend.getOrder()}`;
+            let img_friend;
+            if (this.textures.exists(key)) {
+                img_friend = this.add.image(0, 0, key);
+            } else {
+                console.error(`Missing texture "${key}" for friend (step=${friend.getStep()}, order=${friend.getOrder()})`);
+                img_friend = this.add.image(0, 0, 'missing'); // placeholder
+            }
             img_friend.setOrigin(0.5, 0.5);
             img_friend.setInteractive();
             img_friend.on('pointerover', pointer => {
@@ -726,10 +738,10 @@ export class SceneMain extends Phaser.Scene {
                 this.tooltip.setPosition(pointer.worldX + 10, pointer.worldY + 10);
                 this.tooltip.setVisible(true);
             });
-        img_friend.on('pointerout', () => this.tooltip.setVisible(false));
-        friend.setImg(img_friend);
-        this.gridContainer.add(img_friend); // Add to grid container
-        }); 
+            img_friend.on('pointerout', () => this.tooltip.setVisible(false));
+            friend.setImg(img_friend);
+            this.gridContainer.add(img_friend);
+        });
             
         // Link Enemies
         this.enemies = this.gameLogic.enemies;
