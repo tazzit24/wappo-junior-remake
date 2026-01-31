@@ -41,8 +41,6 @@ const urlsToCache = [
   './assets/images/eh2.png',
   './assets/images/ev1.png',
   './assets/images/ev2.png',
-  './assets/images/friend1.png',
-  './assets/images/friend2.png',
   './assets/images/friend_1_0.png',
   './assets/images/friend_1_1.png',
   './assets/images/friend_2_0.png',

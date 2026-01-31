@@ -12,6 +12,7 @@ import { SaveGameHelper } from '../game/SaveGameHelper.js';
 import { IconButton } from '../ui/IconButton.js';
 import { SolverDialog } from '../ui/SolverDialog.js';
 import { GlobalSettings } from '../game/GlobalSettings.js';
+import { OxygenBar } from '../ui/OxygenBar.js';
 
 export class SceneMain extends Phaser.Scene {
 
@@ -19,6 +20,7 @@ export class SceneMain extends Phaser.Scene {
     gameLogic; // Instance of GameLogic
     text_moves;
     text_level;
+    oxygenBar = null;
     wappo;
     friends = [];
     enemies = [];
@@ -194,6 +196,9 @@ export class SceneMain extends Phaser.Scene {
         });
         this.uiContainer.add(this.text_moves);
         this.updateMovesCounter();
+        const oxygenSlots = Number(this.level.getBasescore()) || 0;
+        this.oxygenBar = new OxygenBar(this, oxygenSlots);
+        this.uiContainer.add(this.oxygenBar);
         this.tooltip = this.add.text(0, 0, '', {
             font: '16px Arial',
             fill: '#fff',
@@ -225,6 +230,7 @@ export class SceneMain extends Phaser.Scene {
         const gameHeight = this.scale.gameSize.height;
         this.isLandscape = gameWidth > gameHeight;
         const offsetY = this.isLandscape ? 0 : gameHeight * 0.05; // Shift elements down by 5% of height only in portrait mode
+        const oxygenBarSpace = this.isLandscape ? 0 : Math.max(Math.round(gameHeight * 0.035), 18);
         // Calculate cell size based on available space
         const topPadding = 20;
         const gridPadding = 10;
@@ -249,10 +255,10 @@ export class SceneMain extends Phaser.Scene {
         } else {
             // Portrait: controls at the bottom, UI at top
             const availableGridWidth = gameWidth - gridPadding * 2;
-            const availableGridHeight = gameHeight - controlsSpace - uiHeaderSpace - gridPadding * 2;
+            const availableGridHeight = gameHeight - controlsSpace - uiHeaderSpace - oxygenBarSpace - gridPadding * 2;
             this.cellSize = Math.min(availableGridWidth / this.gridSize, availableGridHeight / this.gridSize);
             this.gridOffsetX = (gameWidth - (this.cellSize * this.gridSize)) / 2;
-            this.gridOffsetY = uiHeaderSpace + topPadding + offsetY;
+            this.gridOffsetY = uiHeaderSpace + topPadding + offsetY + oxygenBarSpace;
             this.controlsAreaX = gameWidth / 2;
             this.controlsAreaY = this.gridOffsetY + (this.cellSize * this.gridSize) + topPadding * 4; // More space for two button rows
             // UI area in portrait (top left)
@@ -314,6 +320,25 @@ export class SceneMain extends Phaser.Scene {
             this.text_moves.setFontSize(movesFontSize);
             this.text_moves.setStroke('#000000', Math.max(Math.round(movesFontSize * 0.1), 2));
         }
+        // Oxygen bar layout - continuous bar with bubbles spanning full grid dimension
+        if (this.oxygenBar) {
+            const gridWidth = this.cellSize * this.gridSize;
+            const gridHeight = this.cellSize * this.gridSize;
+            
+            if (this.isLandscape) {
+                // Vertical bar: spans the entire height of the grid, positioned flush left of grid
+                this.oxygenBar.setOrientation('vertical');
+                const barWidth = Math.max(Math.round(levelFontSize * 1.2), 24); // Compact width
+                const barHeight = gridHeight; // Full grid height
+                this.oxygenBar.setBarSize(barWidth, barHeight);
+            } else {
+                // Horizontal bar: spans the entire width of the grid
+                this.oxygenBar.setOrientation('horizontal');
+                const barWidth = gridWidth; // Full grid width
+                const barHeight = Math.max(Math.round(levelFontSize * 0.8), 20); // Compact height
+                this.oxygenBar.setBarSize(barWidth, barHeight);
+            }
+        }
         // Set position, alignment, and origin based on orientation
         if (!this.isLandscape) {
             // Portrait mode: labels in the header area (top left)
@@ -332,6 +357,15 @@ export class SceneMain extends Phaser.Scene {
                 this.text_moves.setOrigin(0, 0.5);
                 this.text_moves.setAlign('left');
             }
+            if (this.oxygenBar) {
+                const barMargin = Math.max(Math.round(height * 0.01), 5); // 5px minimum padding from grid
+                const additionalPadding = 15; // Extra 5px padding to prevent border overlap
+                const barBounds = this.oxygenBar.getBounds();
+                const gridWidth = this.cellSize * this.gridSize;
+                const oxygenX = this.gridOffsetX + (gridWidth) / 2; // Center relative to grid
+                const oxygenY = this.gridOffsetY - barMargin - additionalPadding - barBounds.height / 2; // Adjust for centered origin
+                this.oxygenBar.setPosition(oxygenX, oxygenY);
+            }
         } else {
             // Landscape mode: labels positioned on the left of the grid
             if (this.text_level) {
@@ -342,6 +376,14 @@ export class SceneMain extends Phaser.Scene {
                 this.text_moves.setPosition(this.uiAreaX, this.uiAreaY + levelFontSize + 5);
                 this.text_moves.setOrigin(0, 0);
                 this.text_moves.setAlign('left');
+            }
+            if (this.oxygenBar) {
+                const barMargin = Math.max(Math.round(this.cellSize * 0.2), 6);
+                const barBounds = this.oxygenBar.getBounds();
+                const gridHeight = this.cellSize * this.gridSize;
+                const oxygenX = this.gridOffsetX - barMargin - barBounds.width / 2; // Adjust for centered origin
+                const oxygenY = this.gridOffsetY + (gridHeight) / 2; // Center relative to grid
+                this.oxygenBar.setPosition(oxygenX, oxygenY);
             }
         }
         // Update tooltip
@@ -447,11 +489,11 @@ export class SceneMain extends Phaser.Scene {
         this.createControlButtons();
         
         // Tooltip setup - responsive
-        this.tooltip = this.add.text(0, 0, '', { 
-            font: tooltipFontSize + 'px Arial', 
-            fill: '#fff', 
-            backgroundColor: '#222', 
-            padding: { x: Math.round(tooltipFontSize * 0.4), y: Math.round(tooltipFontSize * 0.2) } 
+        this.tooltip = this.add.text(0, 0, '', {
+            font: tooltipFontSize + 'px Arial',
+            fill: '#fff',
+            backgroundColor: '#222',
+            padding: { x: Math.round(tooltipFontSize * 0.4), y: Math.round(tooltipFontSize * 0.2) }
         }).setDepth(1000).setVisible(false);
     }
 
@@ -860,6 +902,8 @@ export class SceneMain extends Phaser.Scene {
         // Run game logic and get status
         // Always save score for actual player moves (not solver simulations)
         const gameStatus = this.gameLogic.simulateTurn(dir, true);
+        // NOTE: do NOT call consumeSlot() here — 'turnEnd' is emitted inside simulateTurn
+        // which will call updateMovesCounter() and trigger the oxygen bar update.
         
         // IMPORTANT: Always animate moves before ending the turn
         // This ensures animations complete before showing end-of-turn messages
@@ -1117,6 +1161,10 @@ export class SceneMain extends Phaser.Scene {
         this.level = null;
         this.text_moves = null;
         this.text_level = null;
+        if (this.oxygenBar) {
+            this.oxygenBar.destroy();
+            this.oxygenBar = null;
+        }
         this.gridCells = null;
     }
 
@@ -1129,6 +1177,10 @@ export class SceneMain extends Phaser.Scene {
 
     updateMovesCounter() {
         this.text_moves.setText('Moves: ' + this.gameLogic.moves_counter + "/" + this.level.getBasescore());
+        if (this.oxygenBar) {
+            const remaining = Math.max(0, this.level.getBasescore() - this.gameLogic.moves_counter);
+            this.oxygenBar.setCurrentSlots(remaining);
+        }
     }
 
     toggleMusic() {
@@ -1372,7 +1424,7 @@ export class SceneMain extends Phaser.Scene {
         // Check if player has already made moves
         if (this.gameLogic.moves_counter === 0) {
             // No moves yet - solve from initial state with PureBacktracking and basescore limit
-            console.log("Solving from initial state with PureBacktracking, max depth:", this.level.getBasescore());
+            console.log("Solving from initial state with PureBacktracking, max depth: 20");
             solution = Solver.solve(this.level, { algorithm: 'PureBacktracking' });
         } else {
             // Player has made moves - solve from current state with BFS and 20 moves limit
