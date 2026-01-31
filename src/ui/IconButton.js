@@ -4,6 +4,7 @@ export class IconButton {
         this.textures = textures;
         this.scale = scale;
         this.img = scene.add.image(x, y, textures[0]);
+        this.img.setOrigin(0.5, 0.5); // Center the icon
         this.img.setScale(scale);
         this.img.setInteractive();
         this.img.on('pointerdown', callback);

@@ -234,7 +234,8 @@ export class SceneMain extends Phaser.Scene {
         // Calculate cell size based on available space
         const topPadding = 20;
         const gridPadding = 10;
-        const uiHeaderSpace = this.isLandscape ? 0 : 60; // No header space in landscape
+        // Increase header space for 2 rows in portrait (adjusted to reduce gap)
+        const uiHeaderSpace = this.isLandscape ? 0 : gameHeight * 0.10; 
         const controlsSpace = this.isLandscape ? gameWidth * 0.3 : gameHeight * 0.25; // More space for button rows in portrait
         if (this.isLandscape) {
             // Landscape: grid centered, UI on left, controls on right
@@ -294,21 +295,25 @@ export class SceneMain extends Phaser.Scene {
         
         this.gameLogic.on('gameWon', (data) => {
             console.log('Game won event received, waiting for animations to complete');
+            // Update UI to reflect the winning move
+            this.updateMovesCounter();
             // Actions are now handled after animations complete in fireUserInput
         });
         
         this.gameLogic.on('gameOver', (data) => {
             console.log('Game over event received, waiting for animations to complete');
-            // Actions are now handled after animations in fireUserInput
+            // Update UI to reflect the fatal move
+            this.updateMovesCounter();
+            // Actions are now handled after animations complete in fireUserInput
         });
     }
     
     updateLayout() {
         const { width, height } = this.scale.gameSize;
-        // Responsive font sizes
-        const levelFontSize = Math.max(Math.min(Math.round(height * 0.04), 32), 18);
+        // Font sizes proportional to cellSize (like grid pieces)
+        const levelFontSize = Math.max(12, Math.round(this.cellSize * 0.28));
         const movesFontSize = levelFontSize;
-        const tooltipFontSize = Math.max(Math.min(Math.round(height * 0.025), 20), 14);
+        const tooltipFontSize = Math.max(10, Math.round(this.cellSize * 0.2));
         // Calculate margin_topInfos
         const margin_topInfos = Math.max(Math.round(height * 0.015), 4); // Responsive margin, min 4px
         // Set common label attributes
@@ -324,56 +329,46 @@ export class SceneMain extends Phaser.Scene {
         if (this.oxygenBar) {
             const gridWidth = this.cellSize * this.gridSize;
             const gridHeight = this.cellSize * this.gridSize;
+            // Bar thickness proportional to cellSize
+            const barThickness = Math.max(16, Math.round(this.cellSize * 0.35));
             
             if (this.isLandscape) {
                 // Vertical bar: spans the entire height of the grid, positioned flush left of grid
                 this.oxygenBar.setOrientation('vertical');
-                const barWidth = Math.max(Math.round(levelFontSize * 1.2), 24); // Compact width
+                const barWidth = barThickness;
                 const barHeight = gridHeight; // Full grid height
                 this.oxygenBar.setBarSize(barWidth, barHeight);
             } else {
                 // Horizontal bar: spans the entire width of the grid
                 this.oxygenBar.setOrientation('horizontal');
                 const barWidth = gridWidth; // Full grid width
-                const barHeight = Math.max(Math.round(levelFontSize * 0.8), 20); // Compact height
+                const barHeight = barThickness;
                 this.oxygenBar.setBarSize(barWidth, barHeight);
             }
         }
         // Set position, alignment, and origin based on orientation
         if (!this.isLandscape) {
-            // Portrait mode: labels in the header area (top left)
-            if (this.text_level) {
-                const headerHeight = height * 0.05;
-                const leftMargin = 10;
-                // Position level text at top of header
-                this.text_level.setPosition(leftMargin, headerHeight * 0.25);
-                this.text_level.setOrigin(0, 0.5);
-            }
-            if (this.text_moves) {
-                const headerHeight = height * 0.05;
-                const leftMargin = 10;
-                // Position moves text at bottom of header
-                this.text_moves.setPosition(leftMargin, headerHeight * 0.75);
-                this.text_moves.setOrigin(0, 0.5);
-                this.text_moves.setAlign('left');
-            }
+            // Portrait mode: Header text and icons are handled in createControlButtons using Containers.
+            // We only position the OxygenBar here, relative to the grid top.
+            
             if (this.oxygenBar) {
                 const barMargin = Math.max(Math.round(height * 0.01), 5); // 5px minimum padding from grid
-                const additionalPadding = 15; // Extra 5px padding to prevent border overlap
+                const additionalPadding = 15; // Extra padding
                 const barBounds = this.oxygenBar.getBounds();
                 const gridWidth = this.cellSize * this.gridSize;
                 const oxygenX = this.gridOffsetX + (gridWidth) / 2; // Center relative to grid
-                const oxygenY = this.gridOffsetY - barMargin - additionalPadding - barBounds.height / 2; // Adjust for centered origin
+                const oxygenY = this.gridOffsetY - barMargin - additionalPadding - barBounds.height / 2; 
                 this.oxygenBar.setPosition(oxygenX, oxygenY);
             }
         } else {
-            // Landscape mode: labels positioned on the left of the grid
+            // Landscape mode: labels positioned on the left aligned with grid top
+            const gridTopY = this.gridOffsetY;
             if (this.text_level) {
-                this.text_level.setPosition(this.uiAreaX, this.uiAreaY);
+                this.text_level.setPosition(this.uiAreaX, gridTopY);
                 this.text_level.setOrigin(0, 0);
             }
             if (this.text_moves) {
-                this.text_moves.setPosition(this.uiAreaX, this.uiAreaY + levelFontSize + 5);
+                this.text_moves.setPosition(this.uiAreaX, gridTopY + levelFontSize + 5);
                 this.text_moves.setOrigin(0, 0);
                 this.text_moves.setAlign('left');
             }
@@ -381,7 +376,8 @@ export class SceneMain extends Phaser.Scene {
                 const barMargin = Math.max(Math.round(this.cellSize * 0.2), 6);
                 const barBounds = this.oxygenBar.getBounds();
                 const gridHeight = this.cellSize * this.gridSize;
-                const oxygenX = this.gridOffsetX - barMargin - barBounds.width / 2; // Adjust for centered origin
+                const gridRightX = this.gridOffsetX + (this.cellSize * this.gridSize);
+                const oxygenX = gridRightX + barMargin + barBounds.width / 2; // Right side of grid
                 const oxygenY = this.gridOffsetY + (gridHeight) / 2; // Center relative to grid
                 this.oxygenBar.setPosition(oxygenX, oxygenY);
             }
@@ -443,20 +439,31 @@ export class SceneMain extends Phaser.Scene {
 
         // Update header background in portrait mode
         if (!this.isLandscape) {
-            const offsetY = height * 0.05;
+            const row1Height = this.headerRow1Height || Math.max(20, Math.round(this.cellSize * 0.35));
+            const rowSpacing = this.headerRowSpacing || Math.max(6, Math.round(this.cellSize * 0.1));
+            const row2Height = this.headerRow2Height || Math.max(30, Math.round(this.cellSize * 0.6));
+            const gridWidth = this.cellSize * this.gridSize;
             if (!this.headerBackground) {
                 this.headerBackground = this.add.graphics();
                 this.headerBackground.setDepth(-1); // Behind other elements
             }
             this.headerBackground.clear();
-            this.headerBackground.fillStyle(0x0b1c2b, 0.8); // Dark blue with some transparency
-            this.headerBackground.fillRoundedRect(0, 0, width, offsetY, 15); // Rounded rectangle covering the top area
+            
+            // Row 1 background (Level/Moves) - darker blue
+            this.headerBackground.fillStyle(0x0a1520, 0.85);
+            this.headerBackground.fillRoundedRect(this.gridOffsetX, 0, gridWidth, row1Height, { tl: 15, tr: 15, bl: 0, br: 0 });
+            
+            // Row 2 background (Icons) - lighter blue
+            this.headerBackground.fillStyle(0x1a2a3e, 0.8);
+            this.headerBackground.fillRoundedRect(this.gridOffsetX, row1Height + rowSpacing, gridWidth, row2Height, { tl: 0, tr: 0, bl: 15, br: 15 });
         } else {
             // Destroy header background in landscape mode
             if (this.headerBackground) {
                 this.headerBackground.destroy();
                 this.headerBackground = null;
             }
+            // Clear any stored effective header size when not in portrait
+            this.headerEffectiveHeight = null;
         }
     }
 
@@ -498,41 +505,36 @@ export class SceneMain extends Phaser.Scene {
     }
 
     createControlButtons() {
-        // Destroy existing containers and buttons if present
-        
-        // Always destroy existing header buttons (they are added directly to scene)
-        if (this.btnHome && this.btnHome.scene) {
-            this.btnHome.destroy();
-            this.btnHome = null;
+        // --- 1. Cleanup Old Containers ---
+        if (this.headerRow1Container) {
+            // Retrieve text elements before destroying container
+            if (this.text_level) this.headerRow1Container.remove(this.text_level);
+            if (this.text_moves) this.headerRow1Container.remove(this.text_moves);
+            this.headerRow1Container.destroy();
+            this.headerRow1Container = null;
         }
-        if (this.btnReload && this.btnReload.scene) {
-            this.btnReload.destroy();
-            this.btnReload = null;
+        if (this.headerRow2Container) {
+            this.headerRow2Container.destroy();
+            this.headerRow2Container = null;
         }
-        if (this.btnMusic && this.btnMusic.scene) {
-            this.btnMusic.destroy();
-            this.btnMusic = null;
+        // Cleanup legacy background if matched
+        if (this.headerBackground) {
+            this.headerBackground.destroy();
+            this.headerBackground = null;
         }
+
+        // --- 2. Cleanup Old Buttons ---
+        // Always destroy existing hidden buttons
+        if (this.btnHome && this.btnHome.scene) { this.btnHome.destroy(); this.btnHome = null; }
+        if (this.btnReload && this.btnReload.scene) { this.btnReload.destroy(); this.btnReload = null; }
+        if (this.btnMusic && this.btnMusic.scene) { this.btnMusic.destroy(); this.btnMusic = null; }
         
         // Destroy icon buttons
-        if (this.homeIcon) {
-            this.homeIcon.destroy();
-            this.homeIcon = null;
-        }
-        if (this.reloadIcon) {
-            this.reloadIcon.destroy();
-            this.reloadIcon = null;
-        }
-        if (this.musicIcon) {
-            this.musicIcon.destroy();
-            this.musicIcon = null;
-        }
-        if (this.hintIcon) {
-            this.hintIcon.destroy();
-            this.hintIcon = null;
-        }
+        if (this.homeIcon) { this.homeIcon.destroy(); this.homeIcon = null; }
+        if (this.reloadIcon) { this.reloadIcon.destroy(); this.reloadIcon = null; }
+        if (this.musicIcon) { this.musicIcon.destroy(); this.musicIcon = null; }
+        if (this.hintIcon) { this.hintIcon.destroy(); this.hintIcon = null; }
         
-        // Clear button references
         this.btnHome = null;
         this.btnMusic = null;
         this.btnReload = null;
@@ -540,124 +542,205 @@ export class SceneMain extends Phaser.Scene {
         this.btnNext = null;
 
         const { width, height } = this.scale.gameSize;
-        
-        // Compact navigation buttons
-        const navBtnSize = Math.max(Math.min(this.cellSize * 0.5, 50), 30);
-        const navBtnSpacing = navBtnSize + 8;
-        
-        // Regular buttons (Home, Music)
-        const regularBtnSize = Math.max(Math.min(this.cellSize * 0.6, 60), 40);
 
-        // Responsive button font size
-        const navButtonFontSize = Math.max(Math.min(Math.round(height * 0.04), 40), 20);
-        const regularButtonFontSize = Math.max(Math.min(Math.round(height * 0.035), 35), 18);
-        
-        const navButtonStyle = {
-            fontSize: navButtonFontSize + 'px',
-            fontFamily: 'Arial',
-            color: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: Math.max(Math.round(navButtonFontSize * 0.08), 2)
-        };
-        
-        const regularButtonStyle = {
-            fontSize: regularButtonFontSize + 'px',
-            fontFamily: 'Arial',
-            color: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: Math.max(Math.round(regularButtonFontSize * 0.08), 2)
-        };
-
-        // Create icon buttons (always, before orientation-specific code)
+        // Create icon buttons instances
         this.homeIcon = new IconButton(this, ['home'], 0, 0, 1.0, () => this.fireGoHome());
         this.reloadIcon = new IconButton(this, ['replay'], 0, 0, 1.0, () => this.reloadLevel());
         this.musicIcon = new IconButton(this, ['volume_on', 'volume_off'], 0, 0, 1.0, () => this.toggleMusic());
-        // Sync music icon state with GlobalSettings
-        if (this.musicIcon) {
-            this.musicIcon.updateTexture(GlobalSettings.musicEnabled ? 0 : 1);
-        }
+        if (this.musicIcon) this.musicIcon.updateTexture(GlobalSettings.musicEnabled ? 0 : 1);
         this.hintIcon = new IconButton(this, ['hint'], 0, 0, 1.0, () => this.runSolver());
 
         if (this.isLandscape) {
-            // Landscape layout - controls on right of grid
-            const sideAreaWidth = Math.max(width * 0.18, 120);
-            const gridRightX = this.gridOffsetX + (this.cellSize * this.gridSize);
-            const containerX = gridRightX + sideAreaWidth / 2;
-            const containerY = this.gridOffsetY + (this.cellSize * this.gridSize) / 2;
-            // Compact navigation buttons arranged in cross pattern
-            // Directional arrows removed
-            
-            // Solve button just below navigation
-            const solveY = navBtnSpacing * 0.5 + regularBtnSize + 10;
-            // this.btnSolve = this.createButton(0, solveY, 'SOLVE', regularButtonStyle, () => this.runSolver());
-            // this.btnSolve.setOrigin(0.5, 0);
-            
-            // Hidden buttons
+            // --- Landscape Layout using Containers ---
+            // Keep hidden buttons
             this.btnPrev = this.createHiddenButton('PREV', () => this.fireChangeLevel(-1));
             this.btnNext = this.createHiddenButton('NEXT', () => this.fireChangeLevel(1));
             
-            // Position icons for landscape
-            const gridTopY = this.gridOffsetY;
-            const displayedIconHeight = this.homeIcon.img.height * this.homeIcon.img.scaleY;
-            const iconSpacing = 10;
-            let currentY = gridTopY;
+            // Layout constants
+            // Use strict right alignment towards the grid
+            const gapToGrid = 15;
+            const uiRightX = this.gridOffsetX - gapToGrid; // Logic anchor is the right edge of the UI
+            const uiTopY = this.gridOffsetY;
+            
+            // Calculate strictly available width to the left to avoid off-screen clipping
+            // Allow 10px margin from screen left edge
+            const maxBoxWidth = uiRightX - 10;
+            // Desired width (ensure it fits text)
+            const desiredWidth = Math.max(120, this.cellSize * 2.8); 
+            // Clamp width to fit on screen
+            const boxWidth = Math.min(desiredWidth, maxBoxWidth);
+            
+            // --- Box 1: Text Info (Level/Moves) ---
+            const levelFontSize = Math.max(12, Math.round(this.cellSize * 0.28));
+            const movesFontSize = levelFontSize;
+            const boxPadding = 15;
+            const textBoxHeight = levelFontSize + movesFontSize + (boxPadding * 3);
+            
+            this.headerRow1Container = this.add.container(uiRightX, uiTopY);
+            
+            // Background 1 (Dark Blue)
+            const bg1 = this.add.graphics();
+            bg1.fillStyle(0x0a1520, 0.85);
+            // Draw box extending leftwards from uiRightX
+            bg1.fillRoundedRect(-boxWidth, 0, boxWidth, textBoxHeight, { tl: 15, tr: 15, bl: 15, br: 15 });
+            this.headerRow1Container.add(bg1);
+            
+            // Text Elements (Strict Right Alignment)
+            if (this.text_level) {
+                this.headerRow1Container.add(this.text_level);
+                this.text_level.setOrigin(1, 0.5);
+                // Align to right edge (minus padding)
+                this.text_level.setPosition(-boxPadding, boxPadding + levelFontSize/2);
+                this.text_level.setAlign('right');
+            }
+            if (this.text_moves) {
+                this.headerRow1Container.add(this.text_moves);
+                this.text_moves.setOrigin(1, 0.5);
+                // Align to right edge (minus padding)
+                this.text_moves.setPosition(-boxPadding, textBoxHeight - boxPadding - movesFontSize/2);
+                this.text_moves.setAlign('right');
+            }
 
-            // Position icons vertically in the same column
-            this.homeIcon.img.setPosition(containerX, currentY);
-            currentY += displayedIconHeight + iconSpacing;
+            // --- Box 2: Icons ---
+            const sectionSpacing = 20; // Margin between text box and icon box
+            const iconsStartY = uiTopY + textBoxHeight + sectionSpacing;
+            
+            this.headerRow2Container = this.add.container(uiRightX, iconsStartY);
+            
+            // Icon Sizing & Spacing
+            const targetIconSize = Math.max(24, Math.round(this.cellSize * 0.55));
+            const nativeIconWidth = this.homeIcon.img.width;
+            const iconScale = targetIconSize / nativeIconWidth;
+            const displayedIconSize = nativeIconWidth * iconScale;
+            // 80% spacing rule
+            const iconSpacing = displayedIconSize * 0.8; 
+            
+            const iconCount = 4;
+            const iconsBoxHeight = (displayedIconSize * iconCount) + (iconSpacing * (iconCount - 1)) + (boxPadding * 2);
+            
+            // Background 2 (Lighter Blue)
+            const bg2 = this.add.graphics();
+            bg2.fillStyle(0x1a2a3e, 0.8);
+            bg2.fillRoundedRect(-boxWidth, 0, boxWidth, iconsBoxHeight, { tl: 15, tr: 15, bl: 15, br: 15 });
+            this.headerRow2Container.add(bg2);
+            
+            // Add Icons
+            this.headerRow2Container.add(this.homeIcon.img);
+            this.headerRow2Container.add(this.reloadIcon.img);
+            this.headerRow2Container.add(this.hintIcon.img);
+            this.headerRow2Container.add(this.musicIcon.img);
+            
+            // Configure Icons
+            this.homeIcon.img.setScale(iconScale).setOrigin(0.5, 0.5);
+            this.reloadIcon.img.setScale(iconScale).setOrigin(0.5, 0.5);
+            this.hintIcon.img.setScale(iconScale).setOrigin(0.5, 0.5);
+            this.musicIcon.img.setScale(iconScale).setOrigin(0.5, 0.5);
+            
+            // Position Icons (Strict Right Alignment)
+            // Center of icon relative to right edge:
+            const iconCenterX = -boxPadding - displayedIconSize / 2;
+            let currentIconY = boxPadding + displayedIconSize / 2;
+            
+            // Order: Home, Restart, Hint, Mute
+            this.homeIcon.img.setPosition(iconCenterX, currentIconY);
+            
+            currentIconY += displayedIconSize + iconSpacing;
+            this.reloadIcon.img.setPosition(iconCenterX, currentIconY);
+            
+            currentIconY += displayedIconSize + iconSpacing;
+            this.hintIcon.img.setPosition(iconCenterX, currentIconY);
+            
+            currentIconY += displayedIconSize + iconSpacing;
+            this.musicIcon.img.setPosition(iconCenterX, currentIconY);
 
-            this.reloadIcon.img.setPosition(containerX, currentY);
-            currentY += displayedIconHeight + iconSpacing;
-
-            this.musicIcon.img.setPosition(containerX, currentY);
-            currentY += displayedIconHeight + iconSpacing;
-
-            this.hintIcon.img.setPosition(containerX, currentY);
         } else {
-            // Portrait layout - create bottom container for controls
-            const gridBottomY = this.gridOffsetY + (this.cellSize * this.gridSize);
-            const containerMargin = Math.max(this.cellSize * 0.6, 30);
-            const containerX = this.gridOffsetX + (this.cellSize * this.gridSize) / 2;
-            const containerY = gridBottomY + containerMargin;
-            
-            // Navigation button cluster (centered in container)
-            const navClusterHeight = navBtnSpacing * 1.6;
-            const navClusterCenterY = navClusterHeight / 2;
-            
-            // Navigation buttons positioned relative to container center
-            // Directional arrows removed
-            
-            // Solve button remains in the bottom controls
-            const bottomRowSpacing = Math.max(this.cellSize * 0.4, 25);
-            const bottomRowY = navClusterHeight + bottomRowSpacing;
-            const gridLeftX = this.gridOffsetX;
-            const gridRightX = this.gridOffsetX + (this.cellSize * this.gridSize);
-            const containerCenterX = containerX; // Container center position
-            const reloadX = (gridLeftX - containerCenterX + gridRightX - containerCenterX) / 2;
-            const secondRowY = bottomRowY + regularBtnSize + 10;
-            // this.btnSolve = this.createButton(reloadX, secondRowY, 'SOLVE', regularButtonStyle, () => this.runSolver());
-            // this.btnSolve.setOrigin(0.5, 0.5);
-            
-            // Hidden buttons
+            // --- Portrait Layout using Containers ---
             this.btnPrev = this.createHiddenButton('PREV', () => this.fireChangeLevel(-1));
             this.btnNext = this.createHiddenButton('NEXT', () => this.fireChangeLevel(1));
             
-            // Position icons for portrait
-            const headerHeight = height * 0.05;
-            const headerButtonY = headerHeight / 2;
-            const displayedIconWidth = this.homeIcon.img.width * this.homeIcon.img.scaleX;
+            // Dimensions
+            const row1Height = Math.max(20, Math.round(this.cellSize * 0.35));
+            const rowSpacing = Math.max(6, Math.round(this.cellSize * 0.1));
+            // Calculate icon sizing
+            const targetIconSize = Math.max(24, Math.round(this.cellSize * 0.55));
+            const nativeIconWidth = this.homeIcon.img.width;
+            const iconScale = targetIconSize / nativeIconWidth;
             
-            // Position music icon at right edge with margin
-            this.musicIcon.img.setPosition(width - displayedIconWidth / 2, headerButtonY);
+             // Row 2 height depends on icon size + padding
+            const row2Height = (nativeIconWidth * iconScale) + Math.max(8, Math.round(this.cellSize * 0.12));
+            const gridWidth = this.cellSize * this.gridSize;
+
+            // Apply scale
+            this.homeIcon.img.setScale(iconScale); this.homeIcon.scale = iconScale;
+            this.reloadIcon.img.setScale(iconScale); this.reloadIcon.scale = iconScale;
+            this.musicIcon.img.setScale(iconScale); this.musicIcon.scale = iconScale;
+            this.hintIcon.img.setScale(iconScale); this.hintIcon.scale = iconScale;
+
+            // --- Row 1 Container: Level and Moves ---
+            const headerStartY = 20; // Matches topPadding in calculateLayout
+
+            this.headerRow1Container = this.add.container(this.gridOffsetX, headerStartY);
             
-            // Align reload icon to the left of music with spacing
-            Phaser.Display.Align.To.LeftCenter(this.reloadIcon.img, this.musicIcon.img, displayedIconWidth);
+            // Background Row 1 (Fully rounded)
+            const bg1 = this.add.graphics();
+            bg1.fillStyle(0x0a1520, 0.85);
+            bg1.fillRoundedRect(0, 0, gridWidth, row1Height, { tl: 15, tr: 15, bl: 15, br: 15 });
+            this.headerRow1Container.add(bg1);
+
+            // Add Text to Container
+            if (this.text_level) {
+                this.headerRow1Container.add(this.text_level);
+                // Position text visually centered (moved up to fix baseline issue)
+                this.text_level.setPosition(10, row1Height / 2 - 4); 
+                this.text_level.setOrigin(0, 0.5);
+            }
+            if (this.text_moves) {
+                this.headerRow1Container.add(this.text_moves);
+                // Position text visually centered (moved up to fix baseline issue)
+                this.text_moves.setPosition(gridWidth - 10, row1Height / 2 - 4); 
+                this.text_moves.setOrigin(1, 0.5);
+                this.text_moves.setAlign('right');
+            }
+
+            // --- Row 2 Container: Icons ---
+            const row2Y = headerStartY + row1Height + rowSpacing;
+            this.headerRow2Container = this.add.container(this.gridOffsetX, row2Y);
+
+            // Background Row 2 (Fully rounded)
+            const bg2 = this.add.graphics();
+            bg2.fillStyle(0x1a2a3e, 0.8);
+            bg2.fillRoundedRect(0, 0, gridWidth, row2Height, { tl: 15, tr: 15, bl: 15, br: 15 });
+            this.headerRow2Container.add(bg2);
+
+            // Center Icons logic
+            const displayedIconSize = nativeIconWidth * iconScale;
+            // Reduce icon spacing slightly to ensure they fit well
+            const iconSpacing = displayedIconSize * 0.8;
+            const iconCount = 4;
+            const totalIconsWidth = displayedIconSize * iconCount + iconSpacing * (iconCount - 1);
             
-            // Align home icon to the left of reload with spacing
-            Phaser.Display.Align.To.LeftCenter(this.homeIcon.img, this.reloadIcon.img, displayedIconWidth);
-            
-            // Align hint icon to the left of home with spacing
-            Phaser.Display.Align.To.LeftCenter(this.hintIcon.img, this.homeIcon.img, displayedIconWidth);
+            // Start X inside container
+            const startX = (gridWidth - totalIconsWidth) / 2 + displayedIconSize / 2;
+            const centerY = row2Height / 2;
+            // Visual vertical center adjustment
+            const iconY = centerY - 2;
+
+            // Add Icons to container
+            this.headerRow2Container.add(this.homeIcon.img);
+            this.headerRow2Container.add(this.reloadIcon.img);
+            this.headerRow2Container.add(this.hintIcon.img);
+            this.headerRow2Container.add(this.musicIcon.img);
+
+            // Set Position (relative to container) and Origin
+            this.homeIcon.img.setOrigin(0.5, 0.5);
+            this.reloadIcon.img.setOrigin(0.5, 0.5);
+            this.hintIcon.img.setOrigin(0.5, 0.5);
+            this.musicIcon.img.setOrigin(0.5, 0.5);
+
+            this.homeIcon.img.setPosition(startX, iconY);
+            this.reloadIcon.img.setPosition(startX + displayedIconSize + iconSpacing, iconY);
+            this.hintIcon.img.setPosition(startX + (displayedIconSize + iconSpacing) * 2, iconY);
+            this.musicIcon.img.setPosition(startX + (displayedIconSize + iconSpacing) * 3, iconY);
         }
     }
 

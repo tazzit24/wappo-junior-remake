@@ -33,10 +33,10 @@ export class OxygenBar extends Phaser.GameObjects.Container {
             orientation: 'horizontal', // 'horizontal' or 'vertical'
             
             // Colors
-            colorFull: 0x4fc3f7,       // Oxygen fill color
-            colorEmpty: 0x2a2f3a,      // Empty slot color
-            trackColor: 0x1a1a2e,      // Dark track background
-            trackBorderColor: 0x4a90e2, // Blue border glow
+            colorFull: 0x4a90e2,       // Soft blue (filled) - matches game theme
+            colorEmpty: 0x1a2332,      // Dark blue-grey (empty)
+            trackColor: 0x0a1525,      // Darker blue-black track
+            trackBorderColor: 0x4a90e2, // Soft blue glow - matches theme
             trackBorderAlpha: 0.6,
             
             // Padding inside the bar
@@ -44,7 +44,8 @@ export class OxygenBar extends Phaser.GameObjects.Container {
             
             // Bar styling
             borderRadius: 12,
-            slotRadius: 4,
+            slotRadius: 8,
+            slotSpacing: 0,  // Space between slots
             
             // Fade duration matches Wappo move animation (500ms)
             fadeDuration: 500,
@@ -55,10 +56,12 @@ export class OxygenBar extends Phaser.GameObjects.Container {
         // Graphics layers
         this.trackGraphics = this.scene.add.graphics();
         this.slotsGraphics = this.scene.add.graphics();
+        // Per-slot graphics for efficient per-slot updates
+        this.slotGraphics = [];
         
         this.add(this.trackGraphics);
         this.add(this.slotsGraphics);
-        
+        // Add per-slot graphics after static layers so they render above
         this.createBar();
     }
 
@@ -139,17 +142,24 @@ export class OxygenBar extends Phaser.GameObjects.Container {
         const nextSlots = Math.min(normalized, this.maxSlots);
 
         if (nextSlots < this.currentSlots) {
-            // Start fading the topmost slot(s) that were consumed
-            for (let i = this.currentSlots - 1; i >= nextSlots; i--) {
-                this.stopFade();
-                this.fadingSlotIndex = i;
-                this.fadingAlpha = 1;
-                this.startFadeAnimation();
+            // Determine the highest slot index that was consumed
+            const consumedTopIndex = this.currentSlots - 1;
+
+            // Any slots above the new level (excluding the one we're animating) become empty immediately
+            for (let i = consumedTopIndex; i > nextSlots; i--) {
+                this.slotFills[i] = 0;
             }
+
+            // Animate the topmost consumed slot
+            this.stopFade();
+            this.fadingSlotIndex = consumedTopIndex >= 0 ? consumedTopIndex : -1;
+            this.fadingAlpha = 1;
+            this.startFadeAnimation();
         } else if (nextSlots > this.currentSlots) {
             // Refill - reset any fade state
             this.stopFade();
         }
+
         this.currentSlots = nextSlots;
         this.drawSlots();
 
@@ -200,6 +210,23 @@ export class OxygenBar extends Phaser.GameObjects.Container {
             this.fadeTween.stop();
             this.fadeTween = null;
         }
+        
+        // If we are destroyed or have no graphics, just reset state vars and exit
+        if (!this.slotGraphics) {
+            this.fadingSlotIndex = -1;
+            this.fadingAlpha = 1;
+            return;
+        }
+
+        // Reset fading state and make slot fills consistent with currentSlots
+        for (let i = 0; i < (this.slotFills ? this.slotFills.length : 0); i++) {
+            this.slotFills[i] = i < this.currentSlots ? 1 : 0;
+            // Update color to match state
+            if (i < this.maxSlots) {
+                this.updateSlotColor(i);
+            }
+        }
+
         this.fadingSlotIndex = -1;
         this.fadingAlpha = 1;
     }
@@ -210,27 +237,31 @@ export class OxygenBar extends Phaser.GameObjects.Container {
      */
     startFadeAnimation() {
         if (!this.scene || !this.scene.tweens) return;
-        
-        // Create a simple object to tween
-        const fadeTarget = { alpha: 1 };
-        
+
+        const index = this.fadingSlotIndex;
+        if (index < 0 || index >= this.maxSlots) return;
+
+        // Ensure the slotFills array exists
+        this.slotFills = this.slotFills || [];
+        this.slotFills[index] = typeof this.slotFills[index] === 'number' ? this.slotFills[index] : 1;
+
+        // Tween the fill value from current (likely 1) to 0
+        const fadeTarget = { v: this.slotFills[index] };
+
         this.fadeTween = this.scene.tweens.add({
             targets: fadeTarget,
-            alpha: 0,
+            v: 0,
             duration: this.options.fadeDuration,
             ease: 'Linear',
             onUpdate: () => {
-                this.fadingAlpha = fadeTarget.alpha;
-                // Debug draw update
-                // console.log('[OxygenBar] fade onUpdate alpha=', this.fadingAlpha);
-                this.drawSlots();
+                this.slotFills[index] = fadeTarget.v;
+                this.updateSlotColor(index);
             },
             onComplete: () => {
-
-                this.fadingSlotIndex = -1;
-                this.fadingAlpha = 1;
+                this.slotFills[index] = 0;
+                this.updateSlotColor(index);
                 this.fadeTween = null;
-                this.drawSlots();
+                this.fadingSlotIndex = -1;
             }
         });
     }
@@ -239,7 +270,12 @@ export class OxygenBar extends Phaser.GameObjects.Container {
      * (Re)create visual elements. Called after layout or size changes.
      */
     createBar() {
+        // Pre-calculate custom color objects for interpolation
+        this.colorFullObj = Phaser.Display.Color.ValueToColor(this.options.colorFull);
+        this.colorEmptyObj = Phaser.Display.Color.ValueToColor(this.options.colorEmpty);
+        
         this.drawTrack();
+        this.ensureSlotGraphics();
         this.drawSlots();
         this.setSize(this.options.barWidth, this.options.barHeight);
     }
@@ -288,9 +324,10 @@ export class OxygenBar extends Phaser.GameObjects.Container {
      * to show a smooth fade for the most recently consumed slot.
      */
     drawSlots() {
-        const { barWidth, barHeight, padding, orientation, colorFull, colorEmpty, slotRadius } = this.options;
+        const { barWidth, barHeight, padding, orientation } = this.options;
         const count = this.maxSlots;
 
+        // Clear static layer and separators
         this.slotsGraphics.clear();
 
         if (count <= 0) return;
@@ -298,80 +335,51 @@ export class OxygenBar extends Phaser.GameObjects.Container {
         const availableWidth = barWidth - padding * 2;
         const availableHeight = barHeight - padding * 2;
 
+        // Draw separators and static full/empty slots using per-slot graphics
         if (orientation === 'vertical') {
             const slotHeight = availableHeight / count;
             const slotWidth = availableWidth;
             const startX = -availableWidth / 2;
             const startY = -availableHeight / 2;
 
-            for (let i = 0; i < count; i++) {
-                const y = startY + i * slotHeight;
-                const slotIndex = count - 1 - i; // Index from bottom
+            for (let idx = 0; idx < count; idx++) {
+                // logical index 0 = bottom slot
+                const slotIndex = idx; // 0..count-1 from bottom to top
                 
-                const isFull = slotIndex < this.currentSlots;
-                const isFading = slotIndex === this.fadingSlotIndex;
-                
-                let color, alpha;
-                if (isFull) {
-                    color = colorFull;
-                    alpha = 0.95;
-                } else if (isFading) {
-                    // Fading from full to empty
-                    color = colorFull;
-                    alpha = 0.95 * this.fadingAlpha;
-                } else {
-                    color = colorEmpty;
-                    alpha = 0.35;
-                }
-                
-                this.slotsGraphics.fillStyle(color, alpha);
-                this.slotsGraphics.fillRoundedRect(startX, y, slotWidth, slotHeight, slotRadius);
+                // Draw slot shape once, color update applies fills
+                this.drawSlotShape(slotIndex);
+                this.updateSlotColor(slotIndex);
 
-                // Separator line
-                if (i > 0) {
+                // Separator line (draw once per slot row)
+                if (slotIndex < count - 1) {
+                    const y = startY + (count - 1 - slotIndex) * slotHeight;
+                    const sepY = y + slotHeight;
                     this.slotsGraphics.lineStyle(1, 0x0a0f14, 0.8);
                     this.slotsGraphics.beginPath();
-                    this.slotsGraphics.moveTo(startX, y);
-                    this.slotsGraphics.lineTo(startX + slotWidth, y);
+                    this.slotsGraphics.moveTo(startX, sepY);
+                    this.slotsGraphics.lineTo(startX + slotWidth, sepY);
                     this.slotsGraphics.strokePath();
                 }
             }
         } else {
-            // Horizontal
             const slotWidth = availableWidth / count;
             const slotHeight = availableHeight;
             const startX = -availableWidth / 2;
             const startY = -availableHeight / 2;
 
-            for (let i = 0; i < count; i++) {
-                const x = startX + i * slotWidth;
-                const slotIndex = i;
+            for (let slotIndex = 0; slotIndex < count; slotIndex++) {
                 
-                const isFull = slotIndex < this.currentSlots;
-                const isFading = slotIndex === this.fadingSlotIndex;
-                
-                let color, alpha;
-                if (isFull) {
-                    color = colorFull;
-                    alpha = 0.95;
-                } else if (isFading) {
-                    // Fading from full to empty
-                    color = colorFull;
-                    alpha = 0.95 * this.fadingAlpha;
-                } else {
-                    color = colorEmpty;
-                    alpha = 0.35;
-                }
-                
-                this.slotsGraphics.fillStyle(color, alpha);
-                this.slotsGraphics.fillRoundedRect(x, startY, slotWidth, slotHeight, slotRadius);
+                this.drawSlotShape(slotIndex);
+                this.updateSlotColor(slotIndex);
 
-                // Separator line
-                if (i > 0) {
+                // Vertical separator per slot
+                if (slotIndex < count - 1) {
+                    const x = startX + slotIndex * slotWidth;
+                    const sepX = x + slotWidth;
                     this.slotsGraphics.lineStyle(1, 0x0a0f14, 0.8);
                     this.slotsGraphics.beginPath();
-                    this.slotsGraphics.moveTo(x, startY);
-                    this.slotsGraphics.lineTo(x, startY + slotHeight);
+                    this.slotsGraphics.moveTo(sepX, startY);
+                    this.slotsGraphics.lineTo(sepX, startY + slotHeight);
                     this.slotsGraphics.strokePath();
                 }
             }
@@ -379,8 +387,111 @@ export class OxygenBar extends Phaser.GameObjects.Container {
     }
 
     /**
-     * Destroy visual resources used by the bar.
+     * Draw the visual geometry for a single slot.
+     * This is called during initial layout - updateSlotColor handles colors.
+     * @param {number} slotIndex
      */
+    drawSlotShape(slotIndex) {
+        if (!this.slotGraphics || !this.slotGraphics[slotIndex]) return;
+        const g = this.slotGraphics[slotIndex];
+        const { barWidth, barHeight, padding, orientation } = this.options;
+        const count = this.maxSlots;
+        const availableWidth = barWidth - padding * 2;
+        const availableHeight = barHeight - padding * 2;
+
+        // Set position only
+        if (orientation === 'vertical') {
+            const slotHeight = availableHeight / count;
+            const startX = -availableWidth / 2;
+            const startY = -availableHeight / 2;
+            
+            const y = startY + (count - 1 - slotIndex) * slotHeight;
+            const x = startX;
+            g.x = x;
+            g.y = y;
+        } else {
+            const startX = -availableWidth / 2;
+            const startY = -availableHeight / 2;
+            
+            const x = startX + slotIndex * (availableWidth / count);
+            const y = startY;
+            g.x = x;
+            g.y = y;
+        }
+    }
+
+    /**
+     * Update the color and alpha of a slot based on its current fill state.
+     * Graphics objects don't support tinting, so we redraw with the correct color.
+     * @param {number} slotIndex
+     */
+    updateSlotColor(slotIndex) {
+        if (!this.slotGraphics || !this.slotGraphics[slotIndex]) return;
+        const g = this.slotGraphics[slotIndex];
+
+        // Ensure fill state exists
+        const fill = Math.max(0, Math.min(1, (this.slotFills && typeof this.slotFills[slotIndex] === 'number') ? this.slotFills[slotIndex] : 0));
+
+        // Use Phaser's native color interpolation
+        const resultColor = Phaser.Display.Color.Interpolate.ColorWithColor(
+            this.colorEmptyObj, 
+            this.colorFullObj, 
+            1, 
+            fill
+        );
+        const color = Phaser.Display.Color.GetColor(resultColor.r, resultColor.g, resultColor.b);
+        const alpha = 0.35 + fill * (0.95 - 0.35);
+
+        // Graphics objects need to be redrawn with the new color
+        const { barWidth, barHeight, padding, orientation, slotRadius, slotSpacing } = this.options;
+        const count = this.maxSlots;
+        const availableWidth = barWidth - padding * 2;
+        const availableHeight = barHeight - padding * 2;
+        const spacing = slotSpacing;
+
+        g.clear();
+        g.fillStyle(color, alpha);
+
+        if (orientation === 'vertical') {
+            const slotHeight = availableHeight / count;
+            const slotWidth = availableWidth;
+            g.fillRoundedRect(spacing / 2, spacing / 2, slotWidth - spacing, slotHeight - spacing, slotRadius);
+        } else {
+            const slotWidth = availableWidth / count;
+            const slotHeight = availableHeight;
+            g.fillRoundedRect(spacing / 2, spacing / 2, slotWidth - spacing, slotHeight - spacing, slotRadius);
+        }
+    }
+
+    /**
+     * Ensure we have a dedicated Graphics object for each slot and a matching fill state.
+     */
+    ensureSlotGraphics() {
+        // Create or destroy Graphics to match this.maxSlots
+        // Remove excess
+        while (this.slotGraphics.length > this.maxSlots) {
+            const g = this.slotGraphics.pop();
+            g.destroy();
+        }
+        // Add missing
+        for (let i = this.slotGraphics.length; i < this.maxSlots; i++) {
+            const g = this.scene.add.graphics();
+            // Insert per-slot graphics above the static slots layer
+            this.add(g);
+            this.slotGraphics.push(g);
+        }
+
+        // Initialize slot fill states: trim or extend to match maxSlots
+        this.slotFills = this.slotFills || [];
+        this.slotFills.length = this.maxSlots;
+        for (let i = 0; i < this.maxSlots; i++) {
+            if (typeof this.slotFills[i] === 'undefined' || this.slotFills[i] === null) {
+                // full slots are 1, empty 0
+                this.slotFills[i] = i < this.currentSlots ? 1 : 0;
+            }
+        }
+    }
+
     destroy() {
         this.stopFade();
         if (this.trackGraphics) {
@@ -390,6 +501,12 @@ export class OxygenBar extends Phaser.GameObjects.Container {
         if (this.slotsGraphics) {
             this.slotsGraphics.destroy();
             this.slotsGraphics = null;
+        }
+        if (this.slotGraphics) {
+            for (const g of this.slotGraphics) {
+                if (g) g.destroy();
+            }
+            this.slotGraphics = null;
         }
         super.destroy();
     }

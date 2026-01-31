@@ -129,48 +129,134 @@ export class SceneGameover extends Phaser.Scene {
     updateLayout() {
         const { width, height } = this.scale.gameSize;
         const centerX = width / 2;
-        const centerY = height / 2;
 
-        const infoFontSize = Math.max(Math.min(Math.round(height * 0.10), 80), 32);
-        const scoreY = centerY - height * 0.32;
+        // --- 1. Define ideal sizes (percentages that look good on mobile) ---
+        let fontSize = Math.min(height * 0.10, 80); // Max 10% of height
+        let starFontSize = fontSize * 1.5;
+        let buttonIconBaseSize = Math.min(height * 0.12, 100); 
+        let buttonScale = (buttonIconBaseSize / 100) * 1.5; // Scale relative to base icon size
+        let spacing = height * 0.03; // 3% spacing
 
-        const starFont = Math.max(Math.round(infoFontSize * 1.8), 36);
-        const yStars = centerY - height * 0.26;
-        const starXOffset = starFont * 0.6;
+        // --- 2. Calculate Vertical Space Usage ---
+        const scoreHeight = fontSize; 
+        const hasStars = this.textStars && this.textStars.length === 2;
+        const starsHeight = hasStars ? starFontSize : 0;
+        const buttonImgHeight = 64 * buttonScale; // Approximate visual height of buttons
 
-        const buttonY = centerY + height * 0.15;
-        const buttonSpacing = Math.min(width / 4, 150);
-        const buttonFontSize = Math.max(Math.min(Math.round(height * 0.12), 120), 48);
-        const iconScale = (buttonFontSize / 100) * 1.8;
+        // Calculate space required for "fixed" content (Text + Stars + Buttons + Spacings)
+        // Structure: Margin + Score + Gap + Stars + Gap + Image + Gap + Buttons + Margin
+        const totalFixedContent = scoreHeight + (hasStars ? spacing + starsHeight : 0) + spacing + spacing + buttonImgHeight;
+        
+        // --- 3. Determine Image Size & Global Scaling ---
+        // Verify what remains for the image
+        let availableForImage = height - totalFixedContent - (height * 0.1); // Keep 10% margin total
 
-        const imgScale = Math.max(Math.min(width / 600, height / 400) * 0.8, 0.5);
+        let globalScale = 1;
+        // If remaining space is too small (less than 20% of screen), scale everything down
+        if (availableForImage < height * 0.20) {
+            // We want the content to fit. We'll find a scale strictly to fit everything
+            // including a minimal image height of 20%
+            const targetTotalHeight = height * 0.95; // Use 95% of screen max
+            const minImageHeight = height * 0.20;
+            const currentTotalWithMinImage = totalFixedContent + minImageHeight;
+            
+            globalScale = targetTotalHeight / currentTotalWithMinImage;
+            
+            // Apply scale reduction
+            fontSize *= globalScale;
+            starFontSize *= globalScale;
+            buttonScale *= globalScale;
+            spacing *= globalScale;
+            
+            // Recalculate available space for image with new sizes
+            const newFixedContent = (scoreHeight * globalScale) + (hasStars ? spacing * globalScale + starsHeight * globalScale : 0) + spacing * 2 + (buttonImgHeight * globalScale);
+            availableForImage = height - newFixedContent - (height * 0.05);
+        }
+
+        // Calculate Image Scale to fit in available box (width limited & height limited)
+        let imgScale = Math.min(width / 600, height / 400); // Start with 'ideal' scale
+        if (this.gameOverImage) {
+            const naturalW = this.gameOverImage.width || 100;
+            const naturalH = this.gameOverImage.height || 100;
+            
+            // Constrain by width (80% of screen)
+            const maxW = width * 0.8;
+            const scaleW = maxW / naturalW;
+            
+            // Constrain by available height
+            const maxH = availableForImage;
+            const scaleH = maxH / naturalH;
+
+            // Pick smallest to fit bounds
+            imgScale = Math.min(imgScale, scaleW, scaleH);
+        }
+        
+        // --- 4. Position Elements (Vertical Stack) ---
+        const finalImgHeight = this.gameOverImage ? (this.gameOverImage.height * imgScale) : 0;
+        const finalButtonHeight = 64 * buttonScale;
+        
+        // Calculate total actual height of the stack
+        const finalTotalHeight = 
+            fontSize + 
+            (hasStars ? spacing + starFontSize : 0) + 
+            spacing + 
+            finalImgHeight + 
+            spacing + 
+            finalButtonHeight;
+
+        // Start Y - Centered vertically
+        let currentY = (height - finalTotalHeight) / 2;
+
         // Background
         this.drawBackground();
-        // Score and stars
+
+        // A. Score / Ouch Text
+        currentY += fontSize / 2; // Move to center of text line
         if (this.textScore) {
-            this.textScore.setFontSize(infoFontSize);
-            this.textScore.setPosition(centerX, scoreY);
+            this.textScore.setFontSize(fontSize);
+            this.textScore.setPosition(centerX, currentY);
         }
         if (this.textOuch) {
-            this.textOuch.setFontSize(infoFontSize);
-            this.textOuch.setPosition(centerX, scoreY);
+            this.textOuch.setFontSize(fontSize);
+            this.textOuch.setPosition(centerX, currentY);
         }
-        if (this.textStars && this.textStars.length === 2) {
-            this.textStars[0].setFontSize(starFont);
-            this.textStars[1].setFontSize(starFont);
-            this.textStars[0].setPosition(centerX - starXOffset, yStars);
-            this.textStars[1].setPosition(centerX + starXOffset, yStars);
+        currentY += fontSize / 2;
+
+        // B. Stars (if won)
+        if (hasStars) {
+            currentY += spacing;
+            currentY += starFontSize / 2;
+            const starXOffset = starFontSize * 0.6;
+            this.textStars[0].setFontSize(starFontSize);
+            this.textStars[1].setFontSize(starFontSize);
+            this.textStars[0].setPosition(centerX - starXOffset, currentY);
+            this.textStars[1].setPosition(centerX + starXOffset, currentY);
+            currentY += starFontSize / 2;
         }
-        // Buttons
-        this.btn_tryagain.setPosition(centerX - buttonSpacing, buttonY);
-        this.btn_tryagain.setScale(iconScale);
-        this.btn_home.setPosition(centerX, buttonY);
-        this.btn_home.setScale(iconScale);
-        this.btn_nextLevel.setPosition(centerX + buttonSpacing, buttonY);
-        this.btn_nextLevel.setScale(iconScale);
-        // Game Over / Won Image
-        this.gameOverImage.setPosition(centerX, centerY - height * 0.05);
-        this.gameOverImage.setScale(imgScale);
+
+        // C. Image (Game Over / Won)
+        currentY += spacing;
+        currentY += finalImgHeight / 2;
+        if (this.gameOverImage) {
+            this.gameOverImage.setScale(imgScale);
+            this.gameOverImage.setPosition(centerX, currentY);
+        }
+        currentY += finalImgHeight / 2;
+
+        // D. Buttons
+        currentY += spacing;
+        currentY += finalButtonHeight / 2;
+        const btnSpacingX = Math.min(width / 4, 150 * globalScale); 
+
+        this.btn_tryagain.setScale(buttonScale);
+        this.btn_tryagain.setPosition(centerX - btnSpacingX, currentY);
+
+        this.btn_home.setScale(buttonScale);
+        this.btn_home.setPosition(centerX, currentY);
+
+        this.btn_nextLevel.setScale(buttonScale);
+        this.btn_nextLevel.setPosition(centerX + btnSpacingX, currentY);
+
         this.btn_nextLevel.setVisible(this.level_status == "WON");
     }
     
