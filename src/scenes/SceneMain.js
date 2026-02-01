@@ -159,6 +159,9 @@ export class SceneMain extends Phaser.Scene {
     }
 
     create() {
+        // Check for dev mode from URL
+        this.isDevMode = new URLSearchParams(window.location.search).get('dev') === 'true';
+
         // Calculate responsive layout
         this.calculateLayout();
         // Listen for resize events
@@ -797,6 +800,7 @@ export class SceneMain extends Phaser.Scene {
             img.setInteractive();
             
             img.on('pointerover', pointer => {
+                if (!this.isDevMode) return;
                 let props = `Cell #${i}\nType: ${cell.getType()}`;
                 if (cell.getMovableObj()) {
                     props += `\nContains: ${cell.getMovableObj().constructor.name}`;
@@ -834,6 +838,7 @@ export class SceneMain extends Phaser.Scene {
         img_wappo.setOrigin(0.5, 0.5);
         img_wappo.setInteractive();
         img_wappo.on('pointerover', pointer => {
+            if (!this.isDevMode) return;
               let props = `Wappo\nStep: ${this.wappo.getStep()}\nOrder: ${this.wappo.getOrder ? this.wappo.getOrder() : 0}\nLocation: ${this.wappo.getLocation()}`;
             this.tooltip.setText(props);
             this.tooltip.setPosition(pointer.worldX + 10, pointer.worldY + 10);
@@ -858,6 +863,7 @@ export class SceneMain extends Phaser.Scene {
             img_friend.setOrigin(0.5, 0.5);
             img_friend.setInteractive();
             img_friend.on('pointerover', pointer => {
+                if (!this.isDevMode) return;
                 let props = `Friend\nStep: ${friend.getStep()}\nOrder: ${friend.getOrder()}\nLocation: ${friend.getLocation()}`;
                 this.tooltip.setText(props);
                 this.tooltip.setPosition(pointer.worldX + 10, pointer.worldY + 10);
@@ -881,6 +887,7 @@ export class SceneMain extends Phaser.Scene {
             img_enemy.setInteractive();
             
             img_enemy.on('pointerover', pointer => {
+                if (!this.isDevMode) return;
                 let props = `Enemy\nAxis: ${enemy.getAxis()}\nDirection: ${enemy.getDirection()}\nStep: ${enemy.getStep()}\nOrder: ${enemy.getOrder()}\nLocation: ${enemy.getLocation()}`;
             this.tooltip.setText(props);
             this.tooltip.setPosition(pointer.worldX + 10, pointer.worldY + 10);
