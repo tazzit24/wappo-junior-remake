@@ -223,7 +223,7 @@ export class SceneMain extends Phaser.Scene {
 
         // Keep the screen awake while this scene is active
         this.wakeLockManager = Utils.createWakeLockManager();
-        if (this.wakeLockManager) {
+        if (this.wakeLockManager && GlobalSettings.wakeLockEnabled) {
             this.wakeLockManager.setupWakeLock();
         }
     }
@@ -434,7 +434,7 @@ export class SceneMain extends Phaser.Scene {
                 let coords = Utils.getCoords(enemy.getLocation());
                 let x = coords.x * this.cellSize + enemy.getImg().originX * this.cellSize;
                 let y = coords.y * this.cellSize + enemy.getImg().originY * this.cellSize;
-                enemy.getImg().setPosition(x, y).setDisplaySize(this.cellSize * 0.5, this.cellSize * 0.5);
+                enemy.getImg().setPosition(x, y).setDisplaySize(this.cellSize * 0.6, this.cellSize * 0.6);
             }
         });
         // Update control buttons - just recreate the container with new positions
@@ -634,10 +634,10 @@ export class SceneMain extends Phaser.Scene {
             this.headerRow2Container.add(this.musicIcon.img);
             
             // Configure Icons
-            this.homeIcon.img.setScale(iconScale).setOrigin(0.5, 0.5);
-            this.reloadIcon.img.setScale(iconScale).setOrigin(0.5, 0.5);
-            this.hintIcon.img.setScale(iconScale).setOrigin(0.5, 0.5);
-            this.musicIcon.img.setScale(iconScale).setOrigin(0.5, 0.5);
+            this.homeIcon.setScale(iconScale);
+            this.reloadIcon.setScale(iconScale);
+            this.hintIcon.setScale(iconScale);
+            this.musicIcon.setScale(iconScale);
             
             // Position Icons (Strict Right Alignment)
             // Center of icon relative to right edge:
@@ -674,10 +674,10 @@ export class SceneMain extends Phaser.Scene {
             const gridWidth = this.cellSize * this.gridSize;
 
             // Apply scale
-            this.homeIcon.img.setScale(iconScale); this.homeIcon.scale = iconScale;
-            this.reloadIcon.img.setScale(iconScale); this.reloadIcon.scale = iconScale;
-            this.musicIcon.img.setScale(iconScale); this.musicIcon.scale = iconScale;
-            this.hintIcon.img.setScale(iconScale); this.hintIcon.scale = iconScale;
+            this.homeIcon.setScale(iconScale);
+            this.reloadIcon.setScale(iconScale);
+            this.musicIcon.setScale(iconScale);
+            this.hintIcon.setScale(iconScale);
 
             // --- Row 1 Container: Level and Moves ---
             const headerStartY = 20; // Matches topPadding in calculateLayout
@@ -1027,7 +1027,8 @@ export class SceneMain extends Phaser.Scene {
                 this.scene.launch("SceneGameover", {
                     "status": "DIED", 
                     "choosenLevel": this.choosenLevel, 
-                    "moves": this.gameLogic.moves_counter
+                    "moves": this.gameLogic.moves_counter,
+                    "deathReason": gameStatus.deathReason
                 });
             }
             

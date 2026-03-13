@@ -3,6 +3,8 @@ export const GlobalSettings = {
     version: '0.10-beta',
     musicEnabled: false,
     updatesEnabled: true,
+    wakeLockEnabled: true,
+    difficulty: 'easy', // 'easy' or 'normal'
     
     // Load settings from localStorage
     loadSettings: function() {
@@ -12,6 +14,8 @@ export const GlobalSettings = {
                 const parsed = JSON.parse(saved);
                 this.musicEnabled = parsed.musicEnabled !== undefined ? parsed.musicEnabled : this.musicEnabled;
                 this.updatesEnabled = parsed.updatesEnabled !== undefined ? parsed.updatesEnabled : this.updatesEnabled;
+                this.wakeLockEnabled = parsed.wakeLockEnabled !== undefined ? parsed.wakeLockEnabled : this.wakeLockEnabled;
+                this.difficulty = parsed.difficulty !== undefined ? parsed.difficulty : this.difficulty;
             }
         } catch (error) {
             console.warn('Failed to load settings:', error);
@@ -23,7 +27,9 @@ export const GlobalSettings = {
         try {
             const settings = {
                 musicEnabled: this.musicEnabled,
-                updatesEnabled: this.updatesEnabled
+                updatesEnabled: this.updatesEnabled,
+                wakeLockEnabled: this.wakeLockEnabled,
+                difficulty: this.difficulty
             };
             localStorage.setItem('guappoSettings', JSON.stringify(settings));
         } catch (error) {
@@ -41,6 +47,18 @@ export const GlobalSettings = {
         this.updatesEnabled = !this.updatesEnabled;
         this.saveSettings();
         return this.updatesEnabled;
+    },
+
+    toggleWakeLock: function() {
+        this.wakeLockEnabled = !this.wakeLockEnabled;
+        this.saveSettings();
+        return this.wakeLockEnabled;
+    },
+
+    toggleDifficulty: function() {
+        this.difficulty = this.difficulty === 'easy' ? 'normal' : 'easy';
+        this.saveSettings();
+        return this.difficulty;
     }
 };
 

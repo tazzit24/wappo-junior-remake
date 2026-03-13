@@ -12,6 +12,7 @@ import { Enemy } from '../objects/Enemy.js';
 import { Enum } from './Enum.js';
 import { SaveGameHelper } from './SaveGameHelper.js';
 import { EventEmitter } from './EventEmitter.js';
+import { GlobalSettings } from './GlobalSettings.js';
 
 export class GameLogic {
     level;
@@ -93,8 +94,9 @@ export class GameLogic {
                 this.lastTurnMoves.push([wappoMove.move]);
                 this.eventEmitter.emit('pieceMoved', { moves: [wappoMove.move] });
             }
-            this.eventEmitter.emit('gameOver', { reason: 'wappo_died', moves: this.moves_counter });
-            return { isWon: false, isLost: true }; // Wappo died
+            const wappoReason = wappoMove.deathCause === 'trap' ? 'hero_trap' : 'hero_bee';
+            this.eventEmitter.emit('gameOver', { moves: this.moves_counter });
+            return { isWon: false, isLost: true, deathReason: wappoReason };
         }
         // Add Wappo's move to the first set of animations if it happened
         if (wappoMove.move) {
@@ -125,8 +127,9 @@ export class GameLogic {
                                 this.lastTurnMoves.push([result.move]);
                                 this.eventEmitter.emit('pieceMoved', { moves: [result.move] });
                             }
-                            this.eventEmitter.emit('gameOver', { reason: 'friend_died', moves: this.moves_counter });
-                            return { isWon: false, isLost: true }; // A friend died
+                            const friendReason = result.deathCause === 'trap' ? 'hero_trap' : 'hero_bee';
+                            this.eventEmitter.emit('gameOver', { moves: this.moves_counter });
+                            return { isWon: false, isLost: true, deathReason: friendReason };
                         }
                         if (friend.getLocation() !== originalLocation) {
                             movedInTick = true;
@@ -210,8 +213,8 @@ export class GameLogic {
                                 this.lastTurnMoves.push([result.move]);
                                 this.eventEmitter.emit('pieceMoved', { moves: [result.move] });
                             }
-                            this.eventEmitter.emit('gameOver', { reason: 'enemy_attack', moves: this.moves_counter });
-                            return { isWon: false, isLost: true };
+                            this.eventEmitter.emit('gameOver', { moves: this.moves_counter });
+                            return { isWon: false, isLost: true, deathReason: 'enemy_attack' };
                         }
                         if (enemy.getLocation() !== originalLocation) {
                             movedInTick = true;
@@ -256,6 +259,12 @@ export class GameLogic {
             state: this.getStateSnapshot() 
         });
         
+        // Check for oxygen depletion in Normal difficulty mode
+        if (GlobalSettings.difficulty === 'normal' && this.moves_counter >= this.level.basescore) {
+            this.eventEmitter.emit('gameOver', { moves: this.moves_counter });
+            return { isWon: false, isLost: true, deathReason: 'oxygen_depleted' };
+        }
+        
         return { isWon: false, isLost: false }; // Turn ends, no win or loss this turn.
     }
 
@@ -294,7 +303,8 @@ export class GameLogic {
             const target_cellNum = Utils.getCellnum(target_cellXY.x, target_cellXY.y);
             const dest_cell = this.cells[target_cellNum];
             if (this.isFatalMove(piece, dest_cell)) {
-                return { died: true, move: moveDesc };
+                const deathCause = !isEnemy && dest_cell.isTrap() ? 'trap' : 'bee';
+                return { died: true, move: moveDesc, deathCause };
             }
             this.cells[piece.getLocation()].removePiece();
             piece.setLocation(target_cellNum);

@@ -8,6 +8,7 @@ export class SceneGameover extends Phaser.Scene {
 
     level_status;
     choosenLevel;
+    deathReason;
     btn_tryagain;
     btn_home;
     btn_nextLevel;
@@ -28,6 +29,7 @@ export class SceneGameover extends Phaser.Scene {
         this.choosenLevel = data.choosenLevel;
         this.score = data.score;
         this.stars = data.stars;
+        this.deathReason = data.deathReason || null;
     }
 
     preload() {
@@ -49,6 +51,17 @@ export class SceneGameover extends Phaser.Scene {
 
         // Listen for resize events
         this.scale.on('resize', this.handleResize, this);
+
+        // Log death type
+        if (this.level_status === 'DIED') {
+            const deathLabels = {
+                'hero_bee':       'Death by bee collision',
+                'enemy_attack':   'Death by bee collision (enemy attack)',
+                'hero_trap':      'Death by trap',
+                'oxygen_depleted':'Death by oxygen depletion',
+            };
+            console.log('[GameOver] Death type:', deathLabels[this.deathReason] ?? this.deathReason ?? 'unknown');
+        }
 
         // Background
         this.drawBackground();
