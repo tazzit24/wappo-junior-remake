@@ -37,7 +37,9 @@ export class SceneGameover extends Phaser.Scene {
         // this.load.on('progress', progress.updateProgress);
         // this.load.on('complete', progress.destroyProgress);
 
-        this.load.image('gameover', 'assets/images/gameover.png');
+        this.load.image('gameover_enemy_attack',    'assets/images/gameover_enemy_attack.png');
+        this.load.image('gameover_hero_trap',       'assets/images/gameover_hero_trap.png');
+        this.load.image('gameover_oxygen_depleted', 'assets/images/gameover_oxygen_depleted.png');
         this.load.image('gamewon', 'assets/images/gamewon.png');
         this.load.image('home_icon', 'assets/images/home.png');
         this.load.image('replay_icon', 'assets/images/replay.png');
@@ -55,8 +57,7 @@ export class SceneGameover extends Phaser.Scene {
         // Log death type
         if (this.level_status === 'DIED') {
             const deathLabels = {
-                'hero_bee':       'Death by bee collision',
-                'enemy_attack':   'Death by bee collision (enemy attack)',
+                'enemy_attack':   'Death by bee collision',
                 'hero_trap':      'Death by trap',
                 'oxygen_depleted':'Death by oxygen depletion',
             };
@@ -130,7 +131,12 @@ export class SceneGameover extends Phaser.Scene {
         this.btn_nextLevel.on('pointerup', () => this.nextLevel());
 
         // Game Over / Won Image
-        const imgKey = this.level_status == "WON" ? 'gamewon' : 'gameover';
+        const deathImageKeys = {
+            'enemy_attack':    'gameover_enemy_attack',
+            'hero_trap':       'gameover_hero_trap',
+            'oxygen_depleted': 'gameover_oxygen_depleted',
+        };
+        const imgKey = this.level_status == "WON" ? 'gamewon' : (deathImageKeys[this.deathReason] ?? 'gameover_enemy_attack');
         this.gameOverImage = this.add.image(centerX, centerY - height * 0.05, imgKey);
         const imgScale = Math.max(Math.min(width / 600, height / 400) * 0.8, 0.5);
         this.gameOverImage.setScale(imgScale);

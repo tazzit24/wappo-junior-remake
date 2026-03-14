@@ -94,7 +94,7 @@ export class GameLogic {
                 this.lastTurnMoves.push([wappoMove.move]);
                 this.eventEmitter.emit('pieceMoved', { moves: [wappoMove.move] });
             }
-            const wappoReason = wappoMove.deathCause === 'trap' ? 'hero_trap' : 'hero_bee';
+            const wappoReason = wappoMove.deathCause === 'trap' ? 'hero_trap' : 'enemy_attack';
             this.eventEmitter.emit('gameOver', { moves: this.moves_counter });
             return { isWon: false, isLost: true, deathReason: wappoReason };
         }
@@ -127,7 +127,7 @@ export class GameLogic {
                                 this.lastTurnMoves.push([result.move]);
                                 this.eventEmitter.emit('pieceMoved', { moves: [result.move] });
                             }
-                            const friendReason = result.deathCause === 'trap' ? 'hero_trap' : 'hero_bee';
+                            const friendReason = result.deathCause === 'trap' ? 'hero_trap' : 'enemy_attack';
                             this.eventEmitter.emit('gameOver', { moves: this.moves_counter });
                             return { isWon: false, isLost: true, deathReason: friendReason };
                         }
@@ -311,14 +311,9 @@ export class GameLogic {
             dest_cell.setMovableObj(piece);
         } else {
             if (isEnemy) {
-                const dest_cell = this.cells[Utils.getCellnum(target_cellXY.x, target_cellXY.y)];
-                if (!dest_cell || !dest_cell.containsEnemy()) {
-                    piece.incrementMoves();
-                }
-                // Bounce only if blocked by another enemy
-                if (dest_cell && dest_cell.containsEnemy()) {
-                    moveDesc = { piece, isBlocked: true, dir: directionBeforeMove };
-                }
+                // Enemy blocked (by another enemy or other obstacle) — always bounce
+                moveDesc = { piece, isBlocked: true, dir: directionBeforeMove };
+                piece.incrementMoves();
             } else {
                 // Wappo et amis : bounce toujours avec direction
                 moveDesc = { piece, isBlocked: true, dir };
