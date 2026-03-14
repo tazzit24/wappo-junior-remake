@@ -1001,6 +1001,7 @@ export class SceneMain extends Phaser.Scene {
         this.isAnimating = true;
         // Disable all buttons during animation
         this.disableAllControls();
+        if (this.oxygenBar) this.oxygenBar.setBusy(true);
 
         // Run game logic and get status
         // Always save score for actual player moves (not solver simulations)
@@ -1011,8 +1012,8 @@ export class SceneMain extends Phaser.Scene {
         // IMPORTANT: Always animate moves before ending the turn
         // This ensures animations complete before showing end-of-turn messages
         await this.animateMoves(this.gameLogic.lastTurnMoves);
-        
-            // For normal turns, re-enable inputs
+
+        // For normal turns, re-enable inputs
         if (!gameStatus.isWon && !gameStatus.isLost) {
             this.enableAllControls();
             this.isAnimating = false;
@@ -1044,11 +1045,13 @@ export class SceneMain extends Phaser.Scene {
                     "deathReason": gameStatus.deathReason
                 });
             }
-            
+
             // Ensure controls are re-enabled after end of game
             this.enableAllControls();
             this.isAnimating = false;
         }
+
+        if (this.oxygenBar) this.oxygenBar.setBusy(false);
     }
 
     /**

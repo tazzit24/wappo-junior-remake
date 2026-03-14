@@ -52,6 +52,15 @@ export class OxygenBar extends Phaser.GameObjects.Container {
             
             ...options
         };
+
+        // Preserve original colors so we can restore them
+        this._baseTrackColor = this.options.trackColor;
+        this._baseTrackBorderColor = this.options.trackBorderColor;
+
+        // Busy state visuals (shown during animation)
+        this.busy = false;
+        this.busyTrackColor = this._baseTrackColor; // same color but could be modified for effect
+        this.busyTrackBorderColor = 0xFFEA00; // brighter gold
         
         // Graphics layers
         this.trackGraphics = this.scene.add.graphics();
@@ -281,10 +290,21 @@ export class OxygenBar extends Phaser.GameObjects.Container {
     }
 
     /**
+     * Update the busy state (e.g., during animations) and redraw the track.
+     * @param {boolean} isBusy
+     */
+    setBusy(isBusy) {
+        this.busy = Boolean(isBusy);
+        this.drawTrack();
+    }
+
+    /**
      * Draw the continuous track (background + glow) for the oxygen bar.
      */
     drawTrack() {
-        const { barWidth, barHeight, trackColor, trackBorderColor, trackBorderAlpha, borderRadius } = this.options;
+        const { barWidth, barHeight, trackBorderAlpha, borderRadius } = this.options;
+        const trackColor = this.busy ? this.busyTrackColor : this._baseTrackColor;
+        const trackBorderColor = this.busy ? this.busyTrackBorderColor : this._baseTrackBorderColor;
         
         this.trackGraphics.clear();
         
