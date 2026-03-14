@@ -1077,25 +1077,43 @@ export class SceneMain extends Phaser.Scene {
      * Animates a piece staying in place (e.g., a small bounce).
      */
     animateStay(obj, dir) {
-        // Directional blocked bounce effect
+        // Directional blocked bounce effect (includes diagonals)
         return new Promise((resolve) => {
             const img = obj.getImg();
             const originalX = img.x;
             const originalY = img.y;
             const amplitude = this.cellSize * 0.1;
-            let prop, target;
+
+            // Determine bounce offsets
+            let offsetX = 0;
+            let offsetY = 0;
             if (dir === Enum.DIRECTION.NORTH) {
-                prop = 'y'; target = originalY - amplitude;
+                offsetY = -amplitude;
             } else if (dir === Enum.DIRECTION.SOUTH) {
-                prop = 'y'; target = originalY + amplitude;
+                offsetY = amplitude;
             } else if (dir === Enum.DIRECTION.EAST) {
-                prop = 'x'; target = originalX + amplitude;
+                offsetX = amplitude;
             } else if (dir === Enum.DIRECTION.WEST) {
-                prop = 'x'; target = originalX - amplitude;
+                offsetX = -amplitude;
+            } else if (dir === Enum.DIRECTION.NORTH_EAST) {
+                offsetX = amplitude;
+                offsetY = -amplitude;
+            } else if (dir === Enum.DIRECTION.NORTH_WEST) {
+                offsetX = -amplitude;
+                offsetY = -amplitude;
+            } else if (dir === Enum.DIRECTION.SOUTH_EAST) {
+                offsetX = amplitude;
+                offsetY = amplitude;
+            } else if (dir === Enum.DIRECTION.SOUTH_WEST) {
+                offsetX = -amplitude;
+                offsetY = amplitude;
             }
-            if (prop !== undefined) {
-                const tweenConfig = {
+
+            if (offsetX !== 0 || offsetY !== 0) {
+                this.tweens.add({
                     targets: img,
+                    x: originalX + offsetX,
+                    y: originalY + offsetY,
                     duration: 200,
                     yoyo: true,
                     repeat: 0,
@@ -1105,9 +1123,7 @@ export class SceneMain extends Phaser.Scene {
                         img.y = originalY;
                         resolve();
                     }
-                };
-                tweenConfig[prop] = target;
-                this.tweens.add(tweenConfig);
+                });
             } else {
                 // No direction: do nothing
                 resolve();
