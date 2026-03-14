@@ -46,14 +46,27 @@ export class SceneMain extends Phaser.Scene {
     inputDisabled = false; // Flag to prevent all input during solver calculation
 
     // Utility methods to centralize control management
+    static DISABLED_BUTTON_TINT = 0xC0C0C0; // Light gray tint for disabled buttons
+
+    setIconButtonEnabled(icon, enabled) {
+        if (!icon) return;
+        icon.setEnabled(enabled);
+        if (!icon.img) return;
+        if (enabled) {
+            icon.img.clearTint();
+        } else {
+            icon.img.setTint(SceneMain.DISABLED_BUTTON_TINT);
+        }
+    }
+
     disableAllControls() {
         [this.btnHome, this.btnMusic, this.btnReload, this.btnPrev, this.btnNext].forEach(btn => {
             if (btn && btn.disableButtonInteractive) btn.disableButtonInteractive();
         });
-        if (this.homeIcon) this.homeIcon.setEnabled(false);
-        if (this.reloadIcon) this.reloadIcon.setEnabled(false);
-        if (this.musicIcon) this.musicIcon.setEnabled(false);
-        if (this.hintIcon) this.hintIcon.setEnabled(false);
+        this.setIconButtonEnabled(this.homeIcon, false);
+        this.setIconButtonEnabled(this.reloadIcon, false);
+        this.setIconButtonEnabled(this.musicIcon, false);
+        this.setIconButtonEnabled(this.hintIcon, false);
         this.dragFeedbackEnabled = false;
     }
 
@@ -61,10 +74,10 @@ export class SceneMain extends Phaser.Scene {
         [this.btnHome, this.btnMusic, this.btnReload, this.btnPrev, this.btnNext].forEach(btn => {
             if (btn && btn.enableButtonInteractive) btn.enableButtonInteractive();
         });
-        if (this.homeIcon) this.homeIcon.setEnabled(true);
-        if (this.reloadIcon) this.reloadIcon.setEnabled(true);
-        if (this.musicIcon) this.musicIcon.setEnabled(true);
-        if (this.hintIcon) this.hintIcon.setEnabled(true);
+        this.setIconButtonEnabled(this.homeIcon, true);
+        this.setIconButtonEnabled(this.reloadIcon, true);
+        this.setIconButtonEnabled(this.musicIcon, true);
+        this.setIconButtonEnabled(this.hintIcon, true);
         this.dragFeedbackEnabled = true;
     }
 
