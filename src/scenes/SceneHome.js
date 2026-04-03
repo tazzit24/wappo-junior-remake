@@ -42,6 +42,8 @@ export class SceneHome extends Phaser.Scene {
         this.cameras.main.setBackgroundColor('#000000');
         // Parse levels JSON once and cache
         this.levelsJson = JSON.parse(this.cache.text.get('levels'));
+        // Check for dev mode from URL
+        this.isDevMode = new URLSearchParams(window.location.search).get('dev') === 'true';
         // Listen for resize events
         this.scale.on('resize', this.handleResize, this);
         // Register the shutdown handler to clean up when the scene is stopped or restarted.
@@ -90,6 +92,9 @@ export class SceneHome extends Phaser.Scene {
         };
 
         this.levelSlider = new SpaceSlider(this, centerX, formY, sliderWidth, minLevelId, maxLevelId, preselectLevel, sliderConfig);
+        
+        // Enable dragging only in dev mode
+        this.levelSlider.setDraggable(this.isDevMode);
 
         // Buttons: RexUI encapsulation
         this.button_play = new MyRexUIButton(this, 'Play', 'play_circle_icon', () => this.launchLevel());

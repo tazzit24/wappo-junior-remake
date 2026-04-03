@@ -71,6 +71,7 @@ export class SpaceSlider {
         };
         
         this.isDragging = false;
+        this.isDraggingEnabled = true; // Can be disabled to prevent dragging
         this.components = {};
         this.onValueChange = null;
         
@@ -196,6 +197,7 @@ export class SpaceSlider {
         this.components.handle.setInteractive({ useHandCursor: true });
         
         this.components.handle.on('pointerdown', () => {
+            if (!this.isDraggingEnabled) return;
             this.isDragging = true;
             this.components.handle.setTint(this.config.handleActiveTint);
         });
@@ -208,7 +210,7 @@ export class SpaceSlider {
         });
         
         this.scene.input.on('pointermove', (pointer) => {
-            if (this.isDragging) {
+            if (this.isDragging && this.isDraggingEnabled) {
                 const newX = Phaser.Math.Clamp(pointer.x, this.x - this.width/2, this.x + this.width/2);
                 this.components.handle.x = newX;
                 if (this.components.aura) {
@@ -218,6 +220,18 @@ export class SpaceSlider {
                 this.setValue(Math.round(newValue));
             }
         });
+    }
+    
+    /**
+     * Enable or disable dragging functionality
+     * @param {boolean} enabled - Whether dragging should be enabled
+     */
+    setDraggable(enabled) {
+        this.isDraggingEnabled = enabled;
+        // Update cursor style
+        if (this.components.handle) {
+            this.components.handle.input.cursor = enabled ? 'pointer' : 'default';
+        }
     }
     
     setValue(value) {
