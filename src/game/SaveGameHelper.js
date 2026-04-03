@@ -1,6 +1,8 @@
 // File SaveGameHelper.js
 // Centralizes score save/load logic
 
+import { GlobalSettings } from './GlobalSettings.js';
+
 export class SaveGameHelper {
     
     // Returns the full scores JSON object, or an empty object if none exists
@@ -80,7 +82,7 @@ export class SaveGameHelper {
     static exportScores() {
         const scoresObj = this.getScoresObj();
         return {
-            version: 1,
+            version: GlobalSettings.version,
             exportDate: new Date().toISOString(),
             data: scoresObj
         };
@@ -133,7 +135,9 @@ export class SaveGameHelper {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `guappo-save-${new Date().toISOString().split('T')[0]}.json`;
+        // Include date+time in the export filename (safe characters only)
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        link.download = `guappojr-save-${timestamp}.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
