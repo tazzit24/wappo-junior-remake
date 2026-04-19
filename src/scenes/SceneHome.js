@@ -1,5 +1,6 @@
 import { SceneMain } from './SceneMain.js';
 import { Level } from '../game/Level.js';
+import { Solver } from '../solver/Solver.js';
 import { SpaceSlider } from '../ui/SpaceSlider.js';
 import { MyRexUIButton } from '../ui/MyRexUIButton.js';
 import { SaveGameHelper } from '../game/SaveGameHelper.js';
@@ -51,6 +52,12 @@ export class SceneHome extends Phaser.Scene {
         // Setup keyboard input
         this.input.keyboard.on('keydown-ENTER', () => {
             this.launchLevel();
+        });
+        this.input.keyboard.on('keydown-S', (event) => {
+            if (event.ctrlKey && event.altKey) {
+                event.preventDefault();
+                this.runBatchSolver();
+            }
         });
 
         const { width, height } = this.scale.gameSize;
@@ -195,6 +202,7 @@ export class SceneHome extends Phaser.Scene {
         }
         
         this.input.keyboard.off('keydown-ENTER');
+        this.input.keyboard.off('keydown-B');
     }
 
     launchLevel() {
@@ -214,14 +222,7 @@ export class SceneHome extends Phaser.Scene {
     }
 
     runBatchSolver() {
-        this.uiButtons.forEach(button => button.disableButtonInteractive());
-
-        const resultsDiv = document.getElementById('solver-results');
-        // Clear previous results and add a starting message
-        resultsDiv.innerHTML = '';
-        const startElement = document.createElement('div');
-        startElement.textContent = 'Starting batch solve...';
-        resultsDiv.appendChild(startElement);
+        console.log('Starting batch solve...');
 
         const levelsJson = JSON.parse(this.cache.text.get('levels'));
         const totalLevels = 200;
@@ -229,11 +230,7 @@ export class SceneHome extends Phaser.Scene {
 
         const solveNext = () => {
             if (currentLevelIndex > totalLevels) {
-                const finishedElement = document.createElement('div');
-                finishedElement.textContent = 'Batch solve finished.';
-                resultsDiv.appendChild(finishedElement);
-                resultsDiv.scrollTop = resultsDiv.scrollHeight;
-                this.uiButtons.forEach(button => button.enableButtonInteractive());
+                console.log('Batch solve finished.');
                 return;
             }
 
@@ -248,18 +245,13 @@ export class SceneHome extends Phaser.Scene {
                     const pathLabel = solution.solved ? 'path' : 'abandoned';
                     resultText += ` (${pathLabel}: ${path})`;
                 }
-                const lineElement = document.createElement('div');
-                lineElement.textContent = resultText;
-                resultsDiv.appendChild(lineElement);
-                resultsDiv.scrollTop = resultsDiv.scrollHeight; // Auto-scroll to bottom
+                console.log(resultText);
             }
 
             currentLevelIndex++;
-            // Use a small setTimeout delay to let the browser render the update before the next calculation.
             setTimeout(solveNext, 1);
         };
 
-        // Start the first iteration
         setTimeout(solveNext, 1);
     }
 

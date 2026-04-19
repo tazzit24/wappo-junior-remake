@@ -312,8 +312,10 @@ export class GameLogic {
         } else {
             if (isEnemy) {
                 // Enemy blocked (by another enemy or other obstacle) — always bounce
+                // Do NOT increment moves here: the retry loop must be able to re-attempt
+                // this enemy in subsequent ticks (e.g. after the blocking enemy has moved).
+                // Permanently blocked enemies are force-incremented by the end-of-ticks loop.
                 moveDesc = { piece, isBlocked: true, dir: directionBeforeMove };
-                piece.incrementMoves();
             } else {
                 // Wappo et amis : bounce toujours avec direction
                 moveDesc = { piece, isBlocked: true, dir };
