@@ -169,6 +169,7 @@ if ('serviceWorker' in navigator) {
                 const loader = window.initialLoader;
 
                 // --- Update Management ---
+                let isUpdating = false;
                 
                 // Function to show update notification
                 function showUpdateNotification(worker) {
@@ -207,6 +208,7 @@ if ('serviceWorker' in navigator) {
                     button.style.borderRadius = '3px';
                     
                     button.onclick = () => {
+                        isUpdating = true;
                         if (worker) {
                             worker.postMessage({ type: 'SKIP_WAITING' });
                         }
@@ -295,12 +297,16 @@ if ('serviceWorker' in navigator) {
                 console.log('Service Worker registration failed:', error);
             });
 
-        // Reload the page when the new service worker takes control
-        let refreshing;
+        // Reload the page only when an update was explicitly requested by the user
+        let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (refreshing) return;
-            window.location.reload();
+            if (!isUpdating) {
+                console.log('Main.js: Service worker controller changed without user update request. Skipping automatic reload.');
+                return;
+            }
             refreshing = true;
+            window.location.reload();
         });
     };
 

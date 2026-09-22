@@ -1,5 +1,5 @@
 // Update this version manually when you deploy a new version
-const APP_VERSION = '0.12-beta';
+const APP_VERSION = '0.13-beta';
 const CACHE_NAME = `guappo-${APP_VERSION}`;
 const urlsToCache = [
   './',
@@ -31,6 +31,7 @@ const urlsToCache = [
   './src/ui/DragFeedback.js',
   './src/ui/IconButton.js',
   './src/ui/MyRexUIButton.js',
+  './src/ui/OxygenBar.js',
   './src/ui/SolverDialog.js',
   './src/ui/SpaceSlider.js',
   './assets/images/beehive.png',
@@ -55,6 +56,9 @@ const urlsToCache = [
   './assets/images/Guappo_Junior_logo.png',
   './assets/images/hint.png',
   './assets/images/home.png',
+  './assets/images/icon_192.png',
+  './assets/images/icon_256.png',
+  './assets/images/icon_512.png',
   './assets/images/medal.png',
   './assets/images/play_circle.png',
   './assets/images/replay.png',
@@ -143,6 +147,10 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -157,30 +165,25 @@ self.addEventListener('fetch', event => {
         const fetchRequest = event.request.clone();
 
         return fetch(fetchRequest).then(response => {
-          // Check if we received a valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clone the response
-          const responseToCache = response.clone();
-
-          // Cache images and audio files
-          if (event.request.url.includes('/assets/images/') ||
-              event.request.url.includes('/assets/audio/') ||
-              event.request.url.includes('.png') ||
-              event.request.url.includes('.jpg') ||
-              event.request.url.includes('.mp3') ||
-              event.request.url.includes('.wav')) {
-            console.log('Caching asset:', event.request.url);
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
+          // Dynamically cache any same-origin successful response at runtime
+          const requestUrl = new URL(event.request.url);
+          if (requestUrl.origin === location.origin && response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseToCache);
+            });
           }
 
           return response;
         });
+      })
+      .catch(err => {
+        console.warn('Network request failed for:', event.request.url, err);
+        // Fallback to cached index.html for navigation requests
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html').then(cachedIndex => cachedIndex || caches.match('./'));
+        }
+        throw err;
       })
   );
 });

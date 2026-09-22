@@ -74,7 +74,10 @@
 
     <script>
         (function() {
+            let hasInitialized = false;
             function init() {
+                if (hasInitialized) return;
+                hasInitialized = true;
                 const titleEl = document.querySelector('#initial-loader .title');
                 
                 const libs = [
@@ -90,20 +93,24 @@
                         
                         xhr.onload = (e) => {
                             if (xhr.status === 200) {
-                                const url = URL.createObjectURL(xhr.response);
+                                const blobUrl = URL.createObjectURL(xhr.response);
                                 const script = document.createElement('script');
-                                script.src = url;
+                                script.src = blobUrl;
                                 script.onload = () => {
-                                    URL.revokeObjectURL(url);
+                                    URL.revokeObjectURL(blobUrl);
                                     resolve();
+                                };
+                                script.onerror = () => {
+                                    URL.revokeObjectURL(blobUrl);
+                                    reject(new Error(`Failed executing script ${url}`));
                                 };
                                 document.head.appendChild(script);
                             } else {
-                                reject(xhr.statusText);
+                                reject(new Error(`Failed loading ${url} (status ${xhr.status})`));
                             }
                         };
                         
-                        xhr.onerror = () => reject('Network error');
+                        xhr.onerror = () => reject(new Error(`Network error while loading ${url}`));
                         xhr.send();
                     });
                 }
@@ -114,12 +121,8 @@
                             await loadScript(lib);
                         }
                         
-                        // Inject Main.js after libraries are ready
-                        const mainScript = document.createElement('script');
-                        mainScript.type = 'module';
-                        mainScript.src = './src/Main.js';
-                        document.body.appendChild(mainScript);
-                        
+                        // Dynamic import replaces document.createElement('script') to catch module errors
+                        await import('./src/Main.js');
                     } catch (err) {
                         console.error('Boot failed:', err);
                         if (titleEl) titleEl.textContent = 'Error loading game';
