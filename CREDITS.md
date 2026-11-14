@@ -1,0 +1,3 @@
+- Background by Brain Studio (https://opengameart.org): All Screaming Brain Studios assets have been released under the CC0/Public Domain License.
+- Bears, Enemies and logos : Original designs (GPL license). Big thanks to my husband for his help!
+- Icons : Google Material Design

@@ -1,132 +1,51 @@
-# Guappo Junior: The Comeback Story Nobody Asked For (But Got Anyway)
+# Wappo Junior Remake (Guappo Junior)
 
-WORK IN PROGRESS... beta released.
----
+A modern remake (fanmade) of the old **Wappo Junior** abandonware game (released on some Siemens phones in 2005).
 
-## Description
+*(Do not confuse this with Wappo or Wappo 2, which are remastered elsewhere. This one is different).*
 
-Welcome, brave internet traveler, to **Guappo Junior**!  
-This isn’t your grandma’s Siemens phone game—though it started there. It’s a fan-made, stubbornly recreated version of the **abandonware classic “Wappo Junior.”** Back in the day, you guided Wappo, a spirited kid, and his pals to the **honeycombs—dodging traps and bees—at the same time.** Think synchronized honey-gathering. The original game concept was published by Robert Abbott (RIP) and then implemented on 'Theseus and the Minotaur' and 'Mummy Maze'. Wappo Junior was a simplified/alternate version of the game.  
+🔗 **Play online:** [https://tazzit24.github.io/wappo-junior-remake/](https://tazzit24.github.io/wappo-junior-remake/)
 
-⚠️ Don’t confuse **Wappo Junior** with **Wappo** or **Wappo 2** (already remastered by other fans and also based on the same concept). This is its own beast. Enjoy!
+*You can install it as a PWA in a supported browser.*
 
-👉 Live demo: https://tazzit24.github.io/Guappo_Junior_Phaser_With_Solver/  (The game is installable as a PWA in any supported browser)
+<a href="image/README/1794503497611.png">
+    <img src="image/README/1794503497611.png" width="400">
+</a>
 
-<img width="408" height="476" alt="image" src="https://github.com/user-attachments/assets/66ede71c-e9a5-4675-9926-9f13952587e1" />
+## How to play?
 
----
+👉 [Read the game guide](https://tazzit24.github.io/wappo-junior-remake/docs/howtoplay.html)
 
-## Installation
+## Why?
 
-1. Download or clone this repo.  
-2. Open the project folder.  
-3. Start a local web server: serve `index.html` (Apache) or `server.js` (Node.js).  
-4. Open your browser at the server address.  
+My old Siemens phone broke before I could finish Wappo Junior. Twenty years later, I decided to fix this:
 
-No complex setup—just a modern browser and a local server.
+* **200 original levels** decoded (from raw binary data to JSON).
+* An **auto-solver** to check that every level is actually possible to win.
+* My own art style: **space mafia bears** instead of the old characters.
 
----
+## Installation & Development
 
-## Dependencies
+Download this repo and start a local web server: serve `index.html` (Apache) or `server.js` (Node.js).
 
-Already bundled in the repo:  
-- **Phaser 3** – brains of the outfit (graphics, logic, assets).  
-- **RexUI Plugin** – smooth talker (UI components).  
+* **Stack:** JavaScript, Phaser 3, RexUI Plugin, HTML5/PWA.
+* **Why Phaser?** It was a great tool to learn Canvas2D, even if it is a bit big for a 2005 mobile game.
+* **AI and me:** 80% of the core logic comes from my old scripts. AI helped me clean the code, write small snippets, add the solver, and refactor the code for responsive design.
 
-PWA and SW features exist but remain untested.
+You can enter the Dev Mode by adding "?dev=true" in the URL bar. This allows to move the slider freely and to see every cell information.
 
----
+## Contributing
 
-## How to Play
+This is mostly a personal hobby project, so there is no big roadmap. However, small contributions are welcome:
+* **Art & Music**: Always open to better sprites, animations, or sounds.
+* **Code**: Small bug fixes or useful tweaks are great, as long as they don't rewrite the whole project.
 
-👉 [Documentation](https://tazzit24.github.io/Guappo_Junior_Phaser_With_Solver/docs/howtoplay.html)
+## Licensing
 
-
----
-
-## The Rules of the House (Licensing)
-
-This project, **"Guappo Junior,"** is a fan-made homage. Siemens Mobile and Softex Digital? Long gone since ’06. I don’t own the original designs.
-
-- **Code:** Licensed under the [MIT License](https://opensource.org/licenses/MIT).  
-  Use, modify, fork, sell, or remix freely, as long as you keep the copyright notice.
-
-- **Original Images & Music (my own work + AI‑generated):** Licensed under **CC BY‑NC (Attribution–NonCommercial)**.  
-  Share, remix, and adapt them, but not for commercial use. Attribution can be to the project name (“Guappo Junior”).
-
-- **Third‑Party Free Assets (e.g., SVGRepo starfish, background):** These remain under their original **CC0 (public domain)** license.  
-  They can be reused without attribution or restriction.
-
-- **Libraries (Phaser 3, RexUI Plugin):** Each has its own license. Respect their rulebooks, or the bees will find you.
-
-
----
-
-## Why Bother? (The Vendetta)
-
-My Siemens phone died before I could finish “Wappo Junior.” That unfinished level haunted me. So I swore vengeance: **finish the game and build a solver** so no one else suffers. Also, a chance to prove I’ve moved past MySpace HTML. Strictly “educational and non-commercial,” of course. *wink*
-
----
-
-## Naming Choice: From Wappo to Guappo
-
-Enter **Guappo** (not *guapo*). In Italian slang, it means “ruffian” or “thug.” Perfect fit for a game all about the quest for honey.  
-
-Reasons:  
-1. **Fresh Identity:** Two decades of abandonware deserved a new name—nostalgic whisper, modern scream.  
-2. **Cultural Upgrade:** Mafia bears > outdated caricatures. I’m Belgo-Italian, I like bears, and they’re easy to draw. So: **cosmonaut mafiosi bears.** Minimal animation required. Win-win.
-
----
-
-## Challenges & Solutions
-
-Reverse-engineering the original was harder than getting a mob boss to talk. My memory was fuzzy, Siemens libraries were gone, and decompiling the J2ME JAR produced gibberish.  
-
-So I went full nerd:  
-- Years of manual work to decode 200 binary levels.  
-- UML diagrams + custom movement algorithms.  
-- Built a solver that cracks all 200 levels. Proof the logic works… probably. Don’t stress-test it too hard, or your bike may burn.  
-
----
-
-## Role of AI
-
-80% of the code was mine, hammered out in 2008. When AI rose, I thought it’d rewrite the game instantly. Nope. Even the fanciest models couldn’t match the original logic.  
-
-Still, AI helped:  
-- Cleaned messy code.  
-- Generated JS/Phaser/UI snippets.  
-- Assisted with solver integration.  
-
-Basically dragged my skills from dial-up era into 2025. Sometimes ignorance really is bliss.
-
----
-
-## Why Phaser 3?
-
-Started in 2020, Phaser 3 was the shiny new toy. Perfect for a Canvas2D rookie.  
-- Simplifies resource handling.  
-- Solid framework, HTML-based, Apache-friendly.  
-- Overkill for a Siemens-sized game? Sure. But I wanted to learn a modern engine.  
-
-And yes, all crafted in **VS Code**—no funny business.
-
----
-
-## What’s Next?
-
-The mission’s complete, but I still plan a few finishing touches:  
-- Add music (because silence kills the vibe).  
-- Fix the landscape view (portrait already works great, but sideways deserves love too).  
-- Package a **standalone install** so it can run directly without a web server—mobile‑friendly by design, but not an Android/iOS port.  
-- Add internationalization (so bees can buzz in multiple languages).  
- 
-Beyond these tweaks, there’s no active maintenance, no grand roadmap, no endless bug‑fix marathons. Just upgrades before I hang up my coding gloves. Consider the project a gift to the famiglia—free to expand, remix, or wreak havoc as you please.
-
----
+* **Source code:** Under the [MIT License](https://opensource.org/licenses/MIT). Free to use and change.
+* **All art, audio, and assets:** Released under **CC0 (Public Domain)** — free for any use, without restriction. See [CREDITS.md](CREDITS.md) for third-party asset attributions.
+* **Libraries (Phaser, RexUI):** Have their own rules and licenses.
 
 ## Fun Fact
 
-Hidden in old files: a blueprint for a new character, **“Don.”** He was meant to move diagonally, independent of the crew. Rules were never written, code never made. A ghost I couldn’t recruit.
-
-
+Hidden in old files: a blueprint for a new character, **“Don.”** He was meant to move diagonally. Rules were never written.
