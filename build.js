@@ -2,94 +2,117 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT_DIR = __dirname;
-const DIST_DIR = 'D:/Builds/Guappo_Junior/';
+const DIST_DIR = process.env.DIST_DIR
+  ? path.resolve(ROOT_DIR, process.env.DIST_DIR)
+  : path.join(ROOT_DIR, 'dist');
 
-fs.mkdirSync(DIST_DIR, { recursive: true });
+const INCLUDED_ITEMS = [
+  'assets',
+  'lib',
+  'src',
+  'favicon.ico',
+  'index.html',
+  'manifest.json',
+  'sw.js'
+];
 
-// Liste des fichiers et dossiers explicitement exclus
-const EXCLUDED_NAMES = new Set([
-  'dist',
-  'build.js',
-  'defs',
-  'docs',
-  'node_modules',
-  'cert.pem',
-  'jsconfig.json',
-  'key.pem',
-  'package.json',
-  'server.js',
-  'test-events.js'
-]);
-
-/**
- * Vérifie si un fichier ou dossier doit être ignoré.
- * @param {string} name - Nom du fichier ou dossier
- * @returns {boolean}
- */
-function shouldExclude(name) {
-  // Exclure tous les fichiers/dossiers commençant par un point (ex: .git, .vscode, .gitignore, etc.)
-  if (name.startsWith('.')) {
-    return true;
-  }
-  // Exclure les éléments spécifiés dans la liste
-  if (EXCLUDED_NAMES.has(name)) {
-    return true;
-  }
-  return false;
+function isPathInside(parent, candidate) {
+  const relativePath = path.relative(parent, candidate);
+  return relativePath !== '' &&
+    relativePath !== '..' &&
+    !relativePath.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(relativePath);
 }
 
-/**
- * Copie récursivement un dossier vers une destination en appliquant les exclusions.
- * @param {string} src - Chemin source
- * @param {string} dest - Chemin de destination
- * @returns {number} Nombre de fichiers copiés
- */
-function copyRecursive(src, dest) {
-  let count = 0;
-  if (!fs.existsSync(dest)) {
-    fs.mkdirSync(dest, { recursive: true });
+function getIncludedPaths() {
+  const seenItems = new Set();
+
+  return INCLUDED_ITEMS.map((item) => {
+    if (path.isAbsolute(item) || item.split(/[\\/]/).includes('..')) {
+      throw new Error(`Invalid inclusion path: ${item}`);
+    }
+    if (seenItems.has(item)) {
+      throw new Error(`Duplicate inclusion path: ${item}`);
+    }
+    seenItems.add(item);
+
+    const sourcePath = path.resolve(ROOT_DIR, item);
+    if (!isPathInside(ROOT_DIR, sourcePath) || isPathInside(DIST_DIR, sourcePath)) {
+      throw new Error(`Inclusion path is outside the project or targets dist: ${item}`);
+    }
+
+    let stats;
+    try {
+      stats = fs.lstatSync(sourcePath);
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        throw new Error(`Included item not found: ${item}`);
+      }
+      throw error;
+    }
+
+    if (!stats.isFile() && !stats.isDirectory()) {
+      throw new Error(`Unsupported item type: ${item}`);
+    }
+
+    return { item, sourcePath };
+  });
+}
+
+function copyRecursive(sourcePath, destinationPath) {
+  const stats = fs.lstatSync(sourcePath);
+
+  if (stats.isSymbolicLink()) {
+    throw new Error(`Symbolic links are not supported: ${sourcePath}`);
+  }
+  if (stats.isFile()) {
+    fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
+    fs.copyFileSync(sourcePath, destinationPath);
+    return 1;
+  }
+  if (!stats.isDirectory()) {
+    throw new Error(`Unsupported file type: ${sourcePath}`);
   }
 
-  const entries = fs.readdirSync(src, { withFileTypes: true });
+  fs.mkdirSync(destinationPath, { recursive: true });
+  const entries = fs.readdirSync(sourcePath, { withFileTypes: true })
+    .sort((left, right) => left.name.localeCompare(right.name));
 
+  let count = 0;
   for (const entry of entries) {
-    if (shouldExclude(entry.name)) {
-      continue;
-    }
+    const childSourcePath = path.join(sourcePath, entry.name);
+    const childDestinationPath = path.join(destinationPath, entry.name);
 
-    const srcPath = path.join(src, entry.name);
-    const destPath = path.join(dest, entry.name);
-
-    if (entry.isDirectory()) {
-      count += copyRecursive(srcPath, destPath);
-    } else if (entry.isFile()) {
-      fs.copyFileSync(srcPath, destPath);
-      count++;
+    if (entry.isSymbolicLink()) {
+      throw new Error(`Symbolic links are not supported: ${childSourcePath}`);
     }
+    count += copyRecursive(childSourcePath, childDestinationPath);
   }
   return count;
 }
 
 function runBuild() {
-  console.log('🚀 Démarrage du build...');
-  console.log(`📁 Dossier source : ${ROOT_DIR}`);
-  console.log(`📁 Dossier cible  : ${DIST_DIR}`);
+  console.log('🚀 Starting build...');
+  console.log(`📁 Source directory: ${ROOT_DIR}`);
+  console.log(`📁 Output directory: ${DIST_DIR}`);
 
+  const includedPaths = getIncludedPaths();
   const startTime = Date.now();
 
-  // Nettoyage préalable du dossier dist s'il existe déjà
   if (fs.existsSync(DIST_DIR)) {
-    console.log('🧹 Nettoyage de l\'ancien dossier "dist"...');
+    console.log('🧹 Cleaning up the previous build directory...');
     fs.rmSync(DIST_DIR, { recursive: true, force: true });
   }
-
   fs.mkdirSync(DIST_DIR, { recursive: true });
 
-  const copiedFiles = copyRecursive(ROOT_DIR, DIST_DIR);
-  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+  let copiedFiles = 0;
+  for (const { item, sourcePath } of includedPaths) {
+    copiedFiles += copyRecursive(sourcePath, path.join(DIST_DIR, item));
+  }
 
-  console.log(`✨ Build terminé avec succès !`);
-  console.log(`📦 ${copiedFiles} fichiers copiés dans "dist" en ${duration}s.`);
+  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+  console.log('✨ Build completed successfully!');
+  console.log(`📦 ${copiedFiles} files copied to "${DIST_DIR}" in ${duration}s.`);
 }
 
 runBuild();
